@@ -1,4 +1,7 @@
-# Native Web Component
+# Digitro Web Components 
+[![Build Status](https://travis-ci.org/Digitro/web-components.svg?branch=develop)](https://travis-ci.org/Digitro/web-components)
+----
+* Native Web Component
 * Using the new V1 spec;
 * Without Polymer;
 * ShadowDom mode close;
