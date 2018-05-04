@@ -1,0 +1,10 @@
+{
+  "name": "web-components",
+  "version": "0.0.1",
+  "devDependencies": {
+    "web-component-tester": "web-component-tester#^6.0.0"
+  },
+  "dependencies": {
+    "web-component-tester": "^6.5.0"
+  }
+}

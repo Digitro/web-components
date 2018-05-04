@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DGT Accordion</title>
+    <script src="../lib/webcomponents-loader.js"></script>
+    <script src="../bower_components/web-component-tester/browser.js"></script>
+    <link rel="import" href="../src/dgt-accordion/dgt-accordion.html">
+</head>
+<body>
+
+    <test-fixture id="dgt-accordion-fixture">
+        <template>
+            <dgt-accordion>
+                <header slot="header">
+                    HEADER
+                </header>
+                <section slot="content">
+                    SECTION
+                </section>
+            </dgt-accordion>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="new-dgt-accordion-fixture">
+        <template>
+            <div></div>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="document-create-element-dgt-accordion-fixture">
+        <template>
+            <div></div>
+        </template>
+    </test-fixture>
+
+    <script>
+
+        let _buildAccordionHTML = function(accordion){
+            let header = document.createElement('header');
+            let content = document.createElement('section');
+            header.setAttribute('slot', 'header');
+            content.setAttribute('slot', 'content');
+            header.innerHTML = "HEADER";
+            content.innerHTML = "CONTENT";
+            accordion.appendChild(header);
+            accordion.appendChild(content);
+            return accordion;
+        }
+
+        let _testOpenAndClose = function(accordion) {
+            accordion.header.click();
+            assert.equal(accordion.hasAttribute('opened'), true);
+            accordion.header.click();
+            assert.equal(accordion.hasAttribute('opened'), false);
+        }
+
+        suite('<dgt-accordion> Using static HTML', function() {
+            let accordion;
+            setup(function() {
+                accordion = fixture('dgt-accordion-fixture');
+            });
+            test('Open and close accordion', function() {
+                return _testOpenAndClose(accordion);
+            });
+        });
+
+        suite('<dgt-accordion> Using new DGTAccordion()', function() {
+            let element;
+            let accordion;
+            setup(function() {
+                element = fixture('new-dgt-accordion-fixture');
+                accordion = _buildAccordionHTML(new DGTAccordion());
+                element.appendChild(accordion);
+            });
+            test('Open and close accordion', function(){
+                return _testOpenAndClose(accordion);
+            });
+        });
+
+        suite('<dgt-accordion> Using document.createElement(\'dgt-accordion\')', function() {
+            let element;
+            let accordion;
+            setup(function() {
+                element = fixture('document-create-element-dgt-accordion-fixture');
+                accordion = _buildAccordionHTML(document.createElement('dgt-accordion'));
+                element.appendChild(accordion);
+            });
+            test('Open and close accordion', function() {
+                return _testOpenAndClose(accordion);
+            });
+        });
+    </script>
+
+</body>
+</html>

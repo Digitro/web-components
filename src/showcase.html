@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../lib/webcomponents-loader.js"></script>
+    <link rel="import" href="dgt-hello/dgt-hello.html">
+    <link rel="import" href="dgt-hello-bla/dgt-hello-bla.html">
+</head>
+<body>
+<dgt-hello>
+    <span slot="goonies">Wellington</span>
+</dgt-hello>
+<dgt-hello-bla>
+    <span slot="goonies">Geraldo</span>
+</dgt-hello-bla>
+
+<script>
+
+    let hello = document.createElement('dgt-hello');
+    let span = document.createElement('span');
+    span.setAttribute('slot', 'goonies');
+    span.innerHTML = "Teste";
+    hello.appendChild(span);
+    document.body.appendChild(hello);
+
+</script>
+</body>
+</html>

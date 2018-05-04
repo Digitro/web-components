@@ -1,0 +1,38 @@
+{
+  "name": "web-component",
+  "version": "0.0.1",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Digitro/web-components.git"
+  },
+  "author": "Digitro",
+  "licenses": [{
+    "type": "Apache-2.0",
+    "url": "http://www.apache.org/licenses/LICENSE-2.0"
+  }],
+  "scripts": {
+    "install": "node node_modules/bower/bin/bower install --allow-root ",
+    "postinstall": "node node_modules/gulp/bin/gulp.js build-zip",
+    "build": "node node_modules/gulp/bin/gulp.js build-zip",
+    "build-war": "node node_modules/gulp/bin/gulp.js build-war",
+    "package-components": "node node_modules/gulp/bin/gulp.js package-components",
+    "clean-dist": "node node_modules/gulp/bin/gulp.js clean-dist"
+  },
+  "devDependencies": {
+    "bower": "latest",
+    "cheerio": "^0.22.0",
+    "eslint": "^3.19.0",
+    "gulp": "^3.9.1",
+    "gulp-clean": "^0.3.2",
+    "gulp-eslint": "^3.0.1",
+    "gulp-html-minifier": "^0.1.8",
+    "gulp-replace": "^0.5.4",
+    "gulp-util": "^3.0.7",
+    "gulp-zip": "^3.2.0",
+    "jsonfile": "^2.4.0",
+    "merge-stream": "^1.0.0",
+    "run-sequence": "^1.2.2",
+    "web-component-tester": "^6.5.0"
+  }
+}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DGT Accordion</title>
+    <script src="../../lib/webcomponents-loader.js"></script>
+    <link rel="import" href="dgt-accordion.html">
+</head>
+<body>
+    <dgt-accordion>
+        <header slot="header">
+            HEADER
+        </header>
+        <section slot="content">
+            SECTION
+        </section>
+    </dgt-accordion>
+    <script>
+        document.addEventListener('WebComponentsReady', function() {
+            var acc = new DGTAccordion();
+            var header = document.createElement('header');
+            header.setAttribute('slot', 'header');
+            header.innerHTML = "Cabeçalho";
+            var content = document.createElement('section');
+            content.setAttribute('slot', 'content');
+            content.innerHTML = "Corpo";
+            acc.appendChild(header);
+            acc.appendChild(content);
+            document.body.appendChild(acc);
+        });
+    </script>
+</body>
+</html>

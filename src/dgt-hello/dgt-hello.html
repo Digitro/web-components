@@ -1,0 +1,14 @@
+<link rel="import" href="../dgt-element/dgt-element.html">
+<template id="dgt-hello">
+    <h1>Meu nome é:
+        <slot name="goonies"></slot>
+    </h1>
+</template>
+<script>
+    class DGTHello extends DGTElement {
+        constructor() {
+            super();
+        }
+    }
+    DGTElement.registerElement('dgt-hello', DGTHello);
+</script>
