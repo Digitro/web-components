@@ -109,7 +109,7 @@ gulp.task('obfuscate', function () {
 
 
 
-gulp.task('build-zip', function (callback) {
+gulp.task('build', function (callback) {
     runSequence('clean-dist', 'package-components', 'copy-polyfills', 'addVersion', 'copy-package-json', "obfuscate", callback);
 });
 
