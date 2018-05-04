@@ -1,37 +1,24 @@
-var gulp = require('gulp');
-var gutil = require('gulp-util');
-var merge = require('merge-stream');
-var replace = require('gulp-replace');
-var zip = require('gulp-zip');
-var clean = require('gulp-clean');
-var runSequence = require('run-sequence');
-var eslint = require('gulp-eslint');
+const gulp = require('gulp');
+const gutil = require('gulp-util');
+const replace = require('gulp-replace');
+const clean = require('gulp-clean');
+const runSequence = require('run-sequence');
+const eslint = require('gulp-eslint');
+const through = require('through2');
+const cheerio = require('cheerio');
+const htmlmin = require('gulp-html-minifier');
+const jsonfile = require('jsonfile');
 
-var through = require('through2');
-var fs = require('fs');
-var cheerio = require('cheerio');
-
-var htmlmin = require('gulp-html-minifier');
-var jsonfile = require('jsonfile');
-
-var path = require('path');
-
-var paths = {
-    webcomponentsjs: "lib/*.js",
+const paths = {
     build: 'dist',
-    buildLibs: 'dist/lib/',
-    buildComponents: 'dist/sgt-dgt-components/',
-    component_dependencies: 'bower_components/**',
-    component_dependencies_dir: 'bower_components/',
+    buildComponents: 'dist/web-components/',
+    polyfills: 'bower_components/webcomponentsjs/*.js',
+    polyfillsDist: 'dist/polyfills/',
     node_modules_dependencies: 'node_modules/**',
-    components: 'src/**',
-    buildExamples: 'dist/examples/',
-    examples: 'examples/**',
-    warDir: 'webapp/**/*',
-    buildWarDir: 'dist/wc.war/'
+    components: 'src/**'
 };
 
-var packageJson = jsonfile.readFileSync('package.json');
+const packageJson = jsonfile.readFileSync('package.json');
 
 gulp.task('clean-dist', function () {
     gutil.log('Cleaning dist of the components');
@@ -39,29 +26,22 @@ gulp.task('clean-dist', function () {
         .pipe(clean());
 });
 
-gulp.task('copy-libs', function () {
-    gutil.log('Copying libs');
-    return  gulp.src(paths.webcomponentsjs)
-            .pipe(gulp.dest(paths.buildLibs));
-
-});
-
 gulp.task('copy-package-json', function () {
     gutil.log('Copying package.json');
-    var newPackageJson = {
+    let newPackageJson = {
         name: packageJson.name + "-dist",
         version: packageJson.version,
         private: false,
         dependencies: packageJson.dependencies
     };
-    var distPackageJson = './' + paths.build + '/package.json';
+    let distPackageJson = './' + paths.build + '/package.json';
     jsonfile.writeFileSync(distPackageJson, newPackageJson, {spaces: 2});
 
     return;
 });
 
 gulp.task('addVersion', function () {
-    var fileTypes = [
+    let fileTypes = [
         {
             name: 'script',
             srcAttribute: 'src'
@@ -71,16 +51,16 @@ gulp.task('addVersion', function () {
             srcAttribute: 'href'
         }
     ];
-    var versionGUID = 'v' + packageJson.version;
-    var addVersionToImports = through.obj(function (file, enc, cb) {
+    let versionGUID = 'v' + packageJson.version;
+    let addVersionToImports = through.obj(function (file, enc, cb) {
         console.log('FILE', file.path);
-        var $ = cheerio.load(file.contents.toString());
-        for (var i = 0; i < fileTypes.length; i++) {
-            var attributes = fileTypes[i];
-            var $assets = $(attributes.name);
-            for (var j = 0; j < $assets.length; j++) {
-                var $asset = $assets.eq(j);
-                var src = $asset.attr(attributes.srcAttribute);
+        let $ = cheerio.load(file.contents.toString());
+        for (let i = 0; i < fileTypes.length; i++) {
+            let attributes = fileTypes[i];
+            let $assets = $(attributes.name);
+            for (let j = 0; j < $assets.length; j++) {
+                let $asset = $assets.eq(j);
+                let src = $asset.attr(attributes.srcAttribute);
                 if (src && !src.match(/.*(\/\/).*/)) {
                     $asset.attr(attributes.srcAttribute,  src + '?_v=' + versionGUID);
                 }
@@ -95,7 +75,7 @@ gulp.task('addVersion', function () {
         .pipe(gulp.dest(paths.buildComponents));
 });
 
-gulp.task('package-components', ['copy-libs'], function () {
+gulp.task('package-components', function () {
     gutil.log('Generating components');
 
     return gulp.src(paths.components)
@@ -103,6 +83,12 @@ gulp.task('package-components', ['copy-libs'], function () {
             skipBinary: true
         }))
         .pipe(gulp.dest(paths.buildComponents));
+});
+
+gulp.task('copy-polyfills', function(){
+    gutil.log('Copying libs');
+    return gulp.src([paths.polyfills, "!**/gulpfile.js", "!**/custom-elements-es5-adapter.js"])
+        .pipe(gulp.dest(paths.polyfillsDist));
 });
 
 gulp.task('obfuscate', function () {
@@ -121,44 +107,10 @@ gulp.task('obfuscate', function () {
 
 });
 
-gulp.task('package-examples', function () {
-    gutil.log('Generating examples');
 
-    return gulp.src(paths.examples)
-        .pipe(replace('../src/', '../sgt-dgt-components/', {
-            skipBinary: true
-        }))
-        .pipe(replace(/((\.\.?\/?)*(bower_components|node_modules))/g, '../lib', {
-            skipBinary: true
-        }))
-        .pipe(gulp.dest(paths.buildExamples));
-});
 
-gulp.task('zip', function () {
-    gutil.log('zip stuff');
-    gulp.src(paths.build + '/**')
-        .pipe(zip('sgt-webcomponents.zip'))
-        .pipe(gulp.dest(paths.build));
-});
-
-gulp.task('war', function () {
-    gutil.log('war stuff');
-    gulp.src(paths.warDir)
-        .pipe(gulp.dest(paths.buildWarDir));
-
-    gulp.src(paths.buildComponents + '**/*')
-        .pipe(gulp.dest(paths.buildWarDir + 'sgt-dgt-components/'));
-
-    gulp.src(paths.buildLibs + '**/*')
-        .pipe(gulp.dest(paths.buildWarDir + 'lib/'));
-});
-
-gulp.task('build-zip', function (callback) {
-    runSequence('clean-dist', 'package-components', 'addVersion', 'copy-package-json', "obfuscate", 'zip', callback);
-});
-
-gulp.task('build-war', function (callback) {
-    runSequence('clean-dist', 'package-components', 'addVersion', 'copy-package-json', "obfuscate", 'war', callback);
+gulp.task('build', function (callback) {
+    runSequence('clean-dist', 'package-components', 'copy-polyfills', 'addVersion', 'copy-package-json', "obfuscate", callback);
 });
 
 gulp.task('lint', function () {
@@ -167,19 +119,12 @@ gulp.task('lint', function () {
     }))
         .pipe(eslint.result(function (result) {
             gutil.log('ESLint result: ' + result.filePath);
-            for (var i = 0; i < result.messages.length; i++) {
+            for (let i = 0; i < result.messages.length; i++) {
                 gutil.log(result.messages[i]);
             }
         }))
         .pipe(eslint.failAfterError());
 });
 
-function getFolders(dir) {
-    return fs.readdirSync(dir)
-        .filter(function(file) {
-            return fs.statSync(path.join(dir, file)).isDirectory();
-        });
-}
-
 // create a default task
-gulp.task("default", ["build-zip"]);
+gulp.task("default", ["build"]);
