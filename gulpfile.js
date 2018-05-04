@@ -29,7 +29,7 @@ gulp.task('clean-dist', function () {
 gulp.task('copy-package-json', function () {
     gutil.log('Copying package.json');
     let newPackageJson = {
-        name: packageJson.name + "-dist",
+        name: packageJson.name,
         version: packageJson.version,
         private: false,
         dependencies: packageJson.dependencies
@@ -109,7 +109,7 @@ gulp.task('obfuscate', function () {
 
 
 
-gulp.task('build', function (callback) {
+gulp.task('build-zip', function (callback) {
     runSequence('clean-dist', 'package-components', 'copy-polyfills', 'addVersion', 'copy-package-json', "obfuscate", callback);
 });
 
@@ -127,4 +127,4 @@ gulp.task('lint', function () {
 });
 
 // create a default task
-gulp.task("default", ["build"]);
+gulp.task("default", ["build-zip"]);
