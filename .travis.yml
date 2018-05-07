@@ -16,3 +16,4 @@ script:
   - xvfb-run npm test
 after_script:
   - gulp coveralls
+  - gulp codeclimate
