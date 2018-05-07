@@ -1,5 +1,5 @@
 # Digitro Web Components 
-[![Build Status](https://travis-ci.org/Digitro/web-components.svg?branch=develop)](https://travis-ci.org/Digitro/web-components)
+[![Build Status](https://travis-ci.org/Digitro/web-components.svg?branch=develop)](https://travis-ci.org/Digitro/web-components) [![Coverage Status](https://coveralls.io/repos/github/Digitro/web-components/badge.svg?branch=develop)](https://coveralls.io/github/Digitro/web-components?branch=develop)
 ----
 * Native Web Component
 * Using the new V1 spec;
