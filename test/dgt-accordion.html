@@ -81,11 +81,11 @@
                 accordion = fixture('dgt-accordion-fixture-without-header');
             });
 
-            sinon.stub(console, 'error');
+            sinon.stub(DGTElement, 'error');
 
             test('<dgt-accordion> without header must log error', function(){
-                expect(console.error.calledOnce).to.be.true;
-                expect(console.error.calledWith('Could not attach dgt-accordion without header')).to.be.true;
+                expect(DGTElement.error.calledOnce).to.be.true;
+                expect(DGTElement.error.calledWith('Could not attach dgt-accordion without header')).to.be.true;
             });
         });
 

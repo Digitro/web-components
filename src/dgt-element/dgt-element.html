@@ -28,57 +28,63 @@
                 }
             }
 
-        __get(target, name) {
-            if (!(name in target)) {
-                return null;
+            __get(target, name) {
+                if (!(name in target)) {
+                    return null;
+                }
+                return target[name];
             }
-            return target[name];
-        }
 
-        __set(target, name, newValue) {
-            let oldValue = target[name] || null;
-            target[name] = newValue;
-            if (target.reflectToAttribute) {
-                if (newValue !== null && newValue !== undefined) {
-                    this.setAttribute(target.attribute, newValue);
-                } else {
-                    this.removeAttribute(target.attribute);
+            __set(target, name, newValue) {
+                let oldValue = target[name] || null;
+                target[name] = newValue;
+                if (target.reflectToAttribute) {
+                    if (newValue !== null && newValue !== undefined) {
+                        this.setAttribute(target.attribute, newValue);
+                    } else {
+                        this.removeAttribute(target.attribute);
+                    }
+                }
+                if (target.observer) {
+                    target.observer(target, oldValue, newValue);
+                }
+                if (target.global) {
+                    let eventName = 'changed' + this.__capitalize(target.attribute);
+                    this.dispatchEvent(new CustomEvent(eventName, {
+                        detail: {oldValue, newValue}
+                    }));
+                }
+                return true;
+            }
+
+            __capitalize(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            mutationObserverCallback(mutations) {
+                for (let mutation of mutations) {
+                    let target = mutation.target;
+                    let newValue = target.getAttribute(mutation.attributeName);
+                    if (this.disabled.value !== newValue) {
+                        this.disabled.value = newValue;
+                    }
                 }
             }
-            if (target.observer) {
-                target.observer(target, oldValue, newValue);
-            }
-            if (target.global) {
-                let eventName = 'changed' + this.__capitalize(target.attribute);
-                this.dispatchEvent(new CustomEvent(eventName, {
-                    detail: {oldValue, newValue}
-                }));
-            }
-            return true;
-        }
-
-        __capitalize(str) {
-            return str.charAt(0).toUpperCase() + str.slice(1);
-        }
-
-        mutationObserverCallback(mutations) {
-            for (let mutation of mutations) {
-                let target = mutation.target;
-                let newValue = target.getAttribute(mutation.attributeName);
-                if (this.disabled.value !== newValue) {
-                    this.disabled.value = newValue;
-                }
-            }
-        }
 
             static registerElement(componentId, componentClass) {
-                let query = '[href*=' + componentId + '] template'
+                let query = '[href*=' + componentId + '] template';
                 if (!window.ShadyDOM) {
                     query = 'template';
                 }
                 DGT_ELEMENTS_TEMPLATES.set(componentId.toUpperCase(),
                     (document.currentScript ? document.currentScript.ownerDocument : document).querySelector(query));
                 customElements.define(componentId, componentClass);
+            }
+
+            static error() {
+                /* eslint-disable no-console */
+                console.error.apply(null, arguments);
+                /* eslint-enable no-console */
             }
         }
 

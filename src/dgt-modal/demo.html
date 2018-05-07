@@ -26,21 +26,21 @@
    <button id="abrir">ABRIR</button>
     <script>
         document.addEventListener('WebComponentsReady', function() {
-
+            /* globals DGTModal */
             let myModal = new DGTModal();
             let header = document.createElement('header');
             let content = document.createElement('div');
             let footer = document.createElement('footer');
             let closeButton = document.createElement('button');
 
-            let abrir = document.querySelector("#abrir");
+            let abrir = document.querySelector('#abrir');
             abrir.addEventListener('click', function(){
 
-                header.innerHTML = "Sergio";
+                header.innerHTML = 'Sergio';
                 header.setAttribute('slot', 'header');
-                content.innerHTML = "<div id='sergio'>Blaaaa</div><button id='mudarCor'>Mudar</button>";
+                content.innerHTML = '<div id="sergio">Blaaaa</div><button id="mudarCor">Mudar</button>';
                 content.setAttribute('slot', 'content');
-                footer.innerHTML = "Footer";
+                footer.innerHTML = 'Footer';
                 footer.setAttribute('slot', 'footer');
                 closeButton.addEventListener('click', function(){
                     myModal.close();
@@ -54,9 +54,9 @@
                 myModal.appendChild(closeButton);
 
                 document.body.appendChild(myModal);
-                document.querySelector("#mudarCor").addEventListener('click', function(){
-                    this.style.background = "red";
-                })
+                document.querySelector('#mudarCor').addEventListener('click', function(){
+                    this.style.background = 'red';
+                });
                 myModal.open();
             });
 
