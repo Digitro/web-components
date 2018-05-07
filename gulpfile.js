@@ -9,7 +9,7 @@ const cheerio = require('cheerio');
 const htmlmin = require('gulp-html-minifier');
 const jsonfile = require('jsonfile');
 const coveralls = require('gulp-coveralls');
-const codeclimate = require('gulp-codeclimate-reporter');
+const codacy = require('gulp-codacy');
 
 const paths = {
     build: 'dist',
@@ -133,10 +133,10 @@ gulp.task('coveralls', function() {
         .pipe(coveralls());
 });
 
-gulp.task('codeclimate', function() {
+gulp.task('codacy', function() {
     return gulp.src('coverage/**/lcov.info')
-        .pipe(codeclimate({
-            token: 'abd3d384cacc320fbd6b3575ad2f08f745babea32c2ab688a4896cb36a1f972a'
+        .pipe(codacy({
+            token: '4f0175351baa40fc921127c5124552b8'
         }));
 });
 
