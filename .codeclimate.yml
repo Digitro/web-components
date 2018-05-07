@@ -3,5 +3,5 @@ plugins:
     enabled: true
     config:
       extensions:
-        - .js
-        - .html
+      - .js
+      - .html
