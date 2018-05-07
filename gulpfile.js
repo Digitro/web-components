@@ -116,7 +116,7 @@ gulp.task('build', function (callback) {
 });
 
 gulp.task('lint', function () {
-    return gulp.src(['src/**/*.js', 'src/**/*.html']).pipe(eslint({
+    return gulp.src(['src/**/*.js', 'src/**/*.html', 'test/**/*.js', 'test/**/*.html']).pipe(eslint({
         fix: false
     }))
         .pipe(eslint.result(function (result) {

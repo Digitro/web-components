@@ -1,4 +1,5 @@
 {
+  "root": true,
   "env": {
     "browser": true,
     "es6": true
@@ -8,8 +9,7 @@
     "html"
   ],
   "globals": {
-    "DGTElement": true,
-    "WCT": true
+    "DGTElement": true
   },
   "rules": {
     "indent": [

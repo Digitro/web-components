@@ -24,11 +24,7 @@
 
      <test-fixture id="dgt-accordion-fixture-without-header">
         <template>
-            <dgt-accordion>
-                <section slot="content">
-                    SECTION
-                </section>
-            </dgt-accordion>
+            <div></div>
         </template>
     </test-fixture>
 
@@ -45,14 +41,14 @@
     </test-fixture>
 
     <script>
-
+        /* globals DGTAccordion */
         let _buildAccordionHTML = function(accordion){
             let header = document.createElement('header');
             let content = document.createElement('section');
             header.setAttribute('slot', 'header');
             content.setAttribute('slot', 'content');
-            header.innerHTML = "HEADER";
-            content.innerHTML = "CONTENT";
+            header.innerHTML = 'HEADER';
+            content.innerHTML = 'CONTENT';
             accordion.appendChild(header);
             accordion.appendChild(content);
             return accordion;
@@ -72,20 +68,6 @@
             });
             test('Open and close accordion', function() {
                 return _testOpenAndClose(accordion);
-            });
-        });
-
-        suite('<dgt-accordion> without header', function() {
-            let accordion;
-            setup(function() {
-                accordion = fixture('dgt-accordion-fixture-without-header');
-            });
-
-            sinon.stub(DGTElement, 'error');
-
-            test('<dgt-accordion> without header must log error', function(){
-                expect(DGTElement.error.calledOnce).to.be.true;
-                expect(DGTElement.error.calledWith('Could not attach dgt-accordion without header')).to.be.true;
             });
         });
 
@@ -112,6 +94,23 @@
             });
             test('Open and close accordion', function() {
                 return _testOpenAndClose(accordion);
+            });
+        });
+
+        suite('<dgt-accordion> without header', function() {
+            let accordion;
+            let element;
+            setup(function() {
+                element = fixture('dgt-accordion-fixture-without-header');
+                accordion = new DGTAccordion();
+                sinon.stub(DGTElement, 'error');
+            });
+
+            test('<dgt-accordion> without header must log error', function(){
+                assert(accordion);
+                element.appendChild(accordion);
+                expect(DGTElement.error.calledOnce).to.be.true;
+                expect(DGTElement.error.calledWith('Could not attach dgt-accordion without header')).to.be.true;
             });
         });
     </script>
