@@ -8,7 +8,8 @@
     "html"
   ],
   "globals": {
-    "DGTElement": true
+    "DGTElement": true,
+    "WCT": true
   },
   "rules": {
     "indent": [
