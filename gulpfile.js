@@ -8,6 +8,7 @@ const through = require('through2');
 const cheerio = require('cheerio');
 const htmlmin = require('gulp-html-minifier');
 const jsonfile = require('jsonfile');
+const coveralls = require('gulp-coveralls');
 
 const paths = {
     build: 'dist',
@@ -124,6 +125,11 @@ gulp.task('lint', function () {
             }
         }))
         .pipe(eslint.failAfterError());
+});
+
+gulp.task('coveralls', function() {
+    return gulp.src('coverage/**/lcov.info')
+        .pipe(coveralls());
 });
 
 // create a default task

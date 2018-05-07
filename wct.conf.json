@@ -1,0 +1,36 @@
+{
+  "suites": ["test/index.html"],
+  "plugins": {
+    "istanbul": {
+      "dir": "./coverage",
+      "reporters": ["text-summary", "lcov"],
+      "include": [
+        "src/**/*.js",
+        "src/**/*.html"
+      ],
+      "exclude": [
+        "**/demo.html",
+        "**/dgt-hello-bla/**",
+        "**/dgt-hello/**"
+      ]
+    },
+    "local": {
+      "skipSeleniumInstall": true,
+      "disabled": false,
+      "browsers": [
+        "chrome"
+      ],
+      "browserOptions": {
+        "chrome": [
+          "start-maximized",
+          "headless",
+          "disable-gpu",
+          "no-sandbox"
+        ],
+        "firefox": [
+          "-headless"
+        ]
+      }
+    }
+  }
+}

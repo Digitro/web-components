@@ -1,0 +1,18 @@
+language: node_js
+sudo: false
+env:
+  - MOZ_HEADLESS=1
+addons:
+  chrome: stable
+  firefox: latest
+node_js:
+  - "6.0"
+before_install:
+  - npm install -g bower gulp
+install:
+  - npm install
+  - bower install
+script:
+  - xvfb-run npm test
+after_script:
+  - gulp coveralls

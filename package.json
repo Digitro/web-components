@@ -1,5 +1,5 @@
 {
-  "name": "web-component",
+  "name": "web-components",
   "version": "0.0.1",
   "main": "index.js",
   "repository": {
@@ -7,10 +7,7 @@
     "url": "https://github.com/Digitro/web-components.git"
   },
   "author": "Digitro",
-  "licenses": [{
-    "type": "Apache-2.0",
-    "url": "http://www.apache.org/licenses/LICENSE-2.0"
-  }],
+  "license": "Apache-2.0",
   "scripts": {
     "test": "node node_modules/.bin/wct",
     "build": "node node_modules/gulp/bin/gulp.js build",
@@ -22,6 +19,7 @@
     "eslint": "^3.19.0",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.3.2",
+    "gulp-coveralls": "^0.1.4",
     "gulp-eslint": "^3.0.1",
     "gulp-html-minifier": "^0.1.8",
     "gulp-replace": "^0.5.4",
@@ -29,6 +27,7 @@
     "gulp-zip": "^3.2.0",
     "jsonfile": "^2.4.0",
     "run-sequence": "^1.2.2",
-    "web-component-tester": "^6.5.0"
+    "web-component-tester": "^6.5.0",
+    "web-component-tester-istanbul": "github:AnguloHerrera/web-component-tester-istanbul"
   }
 }
