@@ -65,8 +65,8 @@
                 for (let mutation of mutations) {
                     let target = mutation.target;
                     let newValue = target.getAttribute(mutation.attributeName);
-                    if (this.disabled.value !== newValue) {
-                        this.disabled.value = newValue;
+                    if (this.disabled !== newValue) {
+                        this.disabled = newValue;
                     }
                 }
             }

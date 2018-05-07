@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DGT Modal</title>
+    <script src="../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../bower_components/web-component-tester/browser.js"></script>
+    <link rel="import" href="../src/dgt-element/dgt-element.html">
+    <link rel="import" href="./resources/dgt-test-element.html">
+</head>
+
+<body>
+<test-fixture id="dgt-element-fixture">
+    <template>
+        <dgt-test-element>
+        </dgt-test-element>
+    </template>
+</test-fixture>
+
+<test-fixture id="empty-fixture">
+    <template>
+        <div></div>
+    </template>
+</test-fixture>
+
+<script>
+    /* globals DGTTestElement */
+    suite('<dgt-element> Using static HTML', function () {
+        let element;
+        setup(function () {
+            element = fixture('dgt-element-fixture');
+        });
+        test('<dgt-element> created', function () {
+            assert.isNotNull(element);
+            assert.isNotNull(element.offsetParent);
+        });
+    });
+
+    suite('<dgt-element> using new DGTTestElement()', function() {
+        let parent;
+        let element;
+        setup(function() {
+            parent = fixture('empty-fixture');
+            element = new DGTTestElement();
+            parent.appendChild(element);
+        });
+
+        test('<dgt-element> created', function () {
+            assert.isNotNull(element);
+            assert.isNotNull(element.offsetParent);
+        });
+    });
+
+    suite('<dgt-element> using document.createElement(\'dgt-element\')', function() {
+        let parent;
+        let element;
+        setup(function() {
+            parent = fixture('empty-fixture');
+            element = document.createElement('dgt-test-element');
+            parent.appendChild(element);
+        });
+
+        test('<dgt-element> created', function () {
+            assert.isNotNull(element);
+            assert.isNotNull(element.offsetParent);
+        });
+    });
+
+    suite('<dgt-element> properties', function() {
+        let element;
+        const observers = {
+            attrNoReflectWithObserver: sinon.stub(),
+            attrReflectWithObserver: sinon.stub(),
+            globalObserver: sinon.stub()
+        };
+
+        setup(function() {
+            element = fixture('dgt-element-fixture');
+            element.properties = [
+                {
+                    attribute: 'attrNoReflectNoObserver',
+                    value: 'value attrNoReflectNoObserver'
+                },
+                {
+                    attribute: 'attrNoReflectWithObserver',
+                    value: 'value attrNoReflectWithObserver',
+                    observer: observers.attrNoReflectWithObserver
+                },
+                {
+                    attribute: 'attrReflectNoObserver',
+                    value: 'value attrReflectNoObserver',
+                    reflectToAttribute: true
+                },
+                {
+                    attribute: 'attrReflectWithObserver',
+                    value: 'value attrReflectWithObserver',
+                    reflectToAttribute: true,
+                    observer: observers.attrReflectWithObserver
+                },
+                {
+                    attribute: 'attrGlobal',
+                    value: 'value global',
+                    global: true
+                }
+            ];
+
+            element.addEventListener('changedAttrGlobal', observers.globalObserver);
+        });
+
+        test('<dgt-element> created', function () {
+            assert.isNotNull(element);
+            assert.isNotNull(element.offsetParent);
+        });
+
+        test('<dgt-element> property without reflectToAttribute and without observer', function () {
+            assert.isTrue(element.hasAttribute('attrNoReflectNoObserver'));
+            assert.equal(element.getAttribute('attrNoReflectNoObserver'), 'value attrNoReflectNoObserver');
+            assert.equal(element.attrNoReflectNoObserver.value, 'value attrNoReflectNoObserver');
+
+            element.attrNoReflectNoObserver.value = 'new value';
+
+            assert.equal(element.attrNoReflectNoObserver.value, 'new value');
+            assert.equal(element.getAttribute('attrNoReflectNoObserver'), 'value attrNoReflectNoObserver');
+        });
+
+        test('<dgt-element> property without reflectToAttribute and with observer', function () {
+            assert.isTrue(element.hasAttribute('attrNoReflectWithObserver'));
+            assert.equal(element.getAttribute('attrNoReflectWithObserver'), 'value attrNoReflectWithObserver');
+            assert.equal(element.attrNoReflectWithObserver.value, 'value attrNoReflectWithObserver');
+
+            element.attrNoReflectWithObserver.value = 'new value';
+
+            assert.equal(element.attrNoReflectWithObserver.value, 'new value');
+            assert.equal(element.getAttribute('attrNoReflectWithObserver'), 'value attrNoReflectWithObserver');
+            expect(observers.attrNoReflectWithObserver.calledOnce).to.be.true;
+        });
+
+        test('<dgt-element> property with reflectToAttribute and without observer', function () {
+            assert.isTrue(element.hasAttribute('attrReflectNoObserver'));
+            assert.equal(element.getAttribute('attrReflectNoObserver'), 'value attrReflectNoObserver');
+            assert.equal(element.attrReflectNoObserver.value, 'value attrReflectNoObserver');
+
+            element.attrReflectNoObserver.value = 'new value';
+
+            assert.equal(element.attrReflectNoObserver.value, 'new value');
+            assert.equal(element.getAttribute('attrReflectNoObserver'), 'new value');
+        });
+
+        test('<dgt-element> property with reflectToAttribute and with observer', function () {
+            assert.isTrue(element.hasAttribute('attrReflectWithObserver'));
+            assert.equal(element.getAttribute('attrReflectWithObserver'), 'value attrReflectWithObserver');
+            assert.equal(element.attrReflectWithObserver.value, 'value attrReflectWithObserver');
+
+            element.attrReflectWithObserver.value = 'new value';
+
+            assert.equal(element.attrReflectWithObserver.value, 'new value');
+            assert.equal(element.getAttribute('attrReflectWithObserver'), 'new value');
+            expect(observers.attrReflectWithObserver.calledOnce).to.be.true;
+        });
+
+        test('<dgt-element> global property', function () {
+            assert.isTrue(element.hasAttribute('attrGlobal'));
+            assert.equal(element.getAttribute('attrGlobal'), 'value global');
+            assert.equal(element.attrGlobal.value, 'value global');
+
+            element.attrGlobal.value = 'new value';
+
+            assert.equal(element.attrGlobal.value, 'new value');
+            assert.equal(element.getAttribute('attrGlobal'), 'value global');
+            expect(observers.globalObserver.calledOnce).to.be.true;
+        });
+    });
+
+</script>
+</body>
+
+</html>
