@@ -36,16 +36,16 @@
             let abrir = document.querySelector('#abrir');
             abrir.addEventListener('click', function(){
 
-                header.innerHTML = 'Sergio';
+                header.innerHTML = 'MyHeader';
                 header.setAttribute('slot', 'header');
-                content.innerHTML = '<div id="sergio">Blaaaa</div><button id="mudarCor">Mudar</button>';
+                content.innerHTML = '<div id="buttonContent">ButtonContent</div><button id="colorChange">Change</button>';
                 content.setAttribute('slot', 'content');
                 footer.innerHTML = 'Footer';
                 footer.setAttribute('slot', 'footer');
                 closeButton.addEventListener('click', function(){
                     myModal.close();
                 });
-                closeButton.innerHTML = 'Fechar';
+                closeButton.innerHTML = 'Close';
                 closeButton.setAttribute('slot', 'close-button');
 
                 myModal.appendChild(header);
@@ -54,7 +54,7 @@
                 myModal.appendChild(closeButton);
 
                 document.body.appendChild(myModal);
-                document.querySelector('#mudarCor').addEventListener('click', function(){
+                document.querySelector('#colorChange').addEventListener('click', function(){
                     this.style.background = 'red';
                 });
                 myModal.open();
