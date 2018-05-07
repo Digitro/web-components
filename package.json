@@ -20,6 +20,7 @@
     "eslint-plugin-html": "~3.2.2",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.3.2",
+    "gulp-codeclimate-reporter": "^1.2.0",
     "gulp-coveralls": "^0.1.4",
     "gulp-eslint": "^3.0.1",
     "gulp-html-minifier": "^0.1.8",

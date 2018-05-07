@@ -1,6 +1,7 @@
 plugins:
   eslint:
     enabled: true
-    extensions:
-      - .js
-      - .html
+    config:
+      extensions:
+        - .js
+        - .html

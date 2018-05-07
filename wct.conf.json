@@ -19,7 +19,8 @@
       "skipSeleniumInstall": true,
       "disabled": false,
       "browsers": [
-        "chrome"
+        "chrome",
+        "firefox"
       ],
       "browserOptions": {
         "chrome": [
