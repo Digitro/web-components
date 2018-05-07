@@ -1,0 +1,86 @@
+<link rel="import" href="../dgt-element/dgt-element.html">
+<template>
+    <style>
+        /* Firefox */
+        dgt-modal {
+            display: none;
+        }
+        dgt-modal[opened]{
+            display: block;
+        }
+        
+        /* Chrome */
+        :host {
+            display: none;
+        }
+        .overlay{
+            position: fixed;
+            top: 0;
+            bottom:0;
+            left: 0;
+            right: 0;
+            background: var(--dgt-overlay-background, #000000);
+            opacity: var(--dgt-opacity, .5);
+        }
+        .modal{
+            background: var(--dgt-background, #ffffff);
+            width: var(--dgt-width, 400px);
+            height: var(--dgt-height, 340px);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            display: flex;
+            flex-direction: column;
+        }
+        :host([opened]){
+            display: block;
+        }
+        .content{
+            display: block;
+            width: 100%;
+        }
+        ::slotted([slot=header]){
+            width: 100%;
+            display: block;
+        }
+        ::slotted([slot=content]){
+            width: 100%;
+            display: block;
+        }
+    </style>
+    <div class="overlay"></div>
+    <div class="modal">
+        <header class="header">
+            <slot name="header"></slot>
+            <slot name="close-button"></slot>
+        </header>
+        <div class="content">
+            <slot name="content"></slot>
+            <slot name="footer"></slot>
+        </div>
+    </div>
+</template>
+<script>
+    class DGTModal extends DGTElement {
+        constructor(){
+            super();
+        }
+        connectedCallback(){
+          this._setListeners();
+        }
+        _setListeners(){
+            this.closeButton = this.querySelector('[slot=close-button]');
+            if(this.closeButton){
+                this.closeButton.addEventListener('click', this.close.bind(this));
+            }
+        }
+        open(){
+            this.setAttribute('opened', '');
+        }
+        close(){
+            this.removeAttribute('opened');
+        }
+    }
+    DGTElement.registerElement('dgt-modal', DGTModal);
+</script>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DGT Modal</title>
+    <script src="../../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <link rel="import" href="dgt-modal.html">
+    <style>
+        dgt-modal{
+
+        }
+    </style>
+</head>
+<body>
+   <!--<dgt-modal>
+       <header slot="header">Minha Modal
+        <button slot="close-button">Fechar</button>
+       </header>
+       <div slot="content">
+           CONTEÚDO
+       </div>
+       <div slot="footer">
+           <button>Enviar</button>
+       </div>
+   </dgt-modal>-->
+   <button id="abrir">ABRIR</button>
+    <script>
+        document.addEventListener('WebComponentsReady', function() {
+
+            let myModal = new DGTModal();
+            let header = document.createElement('header');
+            let content = document.createElement('div');
+            let footer = document.createElement('footer');
+            let closeButton = document.createElement('button');
+
+            let abrir = document.querySelector("#abrir");
+            abrir.addEventListener('click', function(){
+
+                header.innerHTML = "Sergio";
+                header.setAttribute('slot', 'header');
+                content.innerHTML = "<div id='sergio'>Blaaaa</div><button id='mudarCor'>Mudar</button>";
+                content.setAttribute('slot', 'content');
+                footer.innerHTML = "Footer";
+                footer.setAttribute('slot', 'footer');
+                closeButton.addEventListener('click', function(){
+                    myModal.close();
+                });
+                closeButton.innerHTML = 'Fechar';
+                closeButton.setAttribute('slot', 'close-button');
+
+                myModal.appendChild(header);
+                myModal.appendChild(content);
+                myModal.appendChild(footer);
+                myModal.appendChild(closeButton);
+
+                document.body.appendChild(myModal);
+                document.querySelector("#mudarCor").addEventListener('click', function(){
+                    this.style.background = "red";
+                })
+                myModal.open();
+            });
+
+        });
+    </script>
+</body>
+</html>
