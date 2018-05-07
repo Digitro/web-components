@@ -8,9 +8,11 @@ addons:
 node_js:
   - "6.0"
 before_install:
-  - npm install -g bower
+  - npm install -g bower gulp
 install:
   - npm install
   - bower install
 script:
   - xvfb-run npm test
+after_script:
+  - gulp coveralls

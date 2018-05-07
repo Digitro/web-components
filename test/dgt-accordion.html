@@ -46,14 +46,14 @@
             accordion.appendChild(header);
             accordion.appendChild(content);
             return accordion;
-        }
+        };
 
         let _testOpenAndClose = function(accordion) {
             accordion.header.click();
             assert.equal(accordion.hasAttribute('opened'), true);
             accordion.header.click();
             assert.equal(accordion.hasAttribute('opened'), false);
-        }
+        };
 
         suite('<dgt-accordion> Using static HTML', function() {
             let accordion;
