@@ -2,24 +2,28 @@
 <template id="dgt-accordion">
     <style>
         /* Firefox */
-        dgt-accordion{
+        dgt-accordion {
             display: block;
         }
-        dgt-accordion > [slot=content]{
+
+        dgt-accordion > [slot=content] {
             display: none;
         }
-        dgt-accordion[opened] > [slot=content]{
+
+        dgt-accordion[opened] > [slot=content] {
             display: block;
         }
 
         /* Chrome */
-        :host{
+        :host {
             display: block;
         }
-        ::slotted([slot=content]){
+
+        ::slotted([slot=content]) {
             display: none;
         }
-        :host([opened]) ::slotted([slot=content]){
+
+        :host([opened]) ::slotted([slot=content]) {
             display: block;
         }
     </style>
@@ -30,24 +34,27 @@
 
 <script>
     class DGTAccordion extends DGTElement {
-        constructor(){
+        constructor() {
             super();
         }
-        connectedCallback(){
+
+        connectedCallback() {
             this.header = this.querySelector('[slot=header]');
-            if(!this.header){
+            if (!this.header) {
                 return;
             }
             this.header.addEventListener('click', this._toggleAccordion.bind(this));
         }
-        _toggleAccordion(){
+
+        _toggleAccordion() {
             const isOpened = this.hasAttribute('opened');
-            if(isOpened){
+            if (isOpened) {
                 this.removeAttribute('opened');
                 return;
             }
             this.setAttribute('opened', '');
         }
     }
+
     DGTElement.registerElement('dgt-accordion', DGTAccordion);
 </script>

@@ -17,13 +17,14 @@
     </dgt-accordion>
     <script>
         document.addEventListener('WebComponentsReady', function() {
+            /* global DGTAccordion */
             var acc = new DGTAccordion();
             var header = document.createElement('header');
             header.setAttribute('slot', 'header');
-            header.innerHTML = "Cabeçalho";
+            header.innerHTML = 'Cabeçalho';
             var content = document.createElement('section');
             content.setAttribute('slot', 'content');
-            content.innerHTML = "Corpo";
+            content.innerHTML = 'Corpo';
             acc.appendChild(header);
             acc.appendChild(content);
             document.body.appendChild(acc);

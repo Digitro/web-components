@@ -11,7 +11,8 @@
       "exclude": [
         "**/demo.html",
         "**/dgt-hello-bla/**",
-        "**/dgt-hello/**"
+        "**/dgt-hello/**",
+        "**/showcase.html"
       ]
     },
     "local": {

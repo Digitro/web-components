@@ -17,6 +17,7 @@
     "bower": "latest",
     "cheerio": "^0.22.0",
     "eslint": "^3.19.0",
+    "eslint-plugin-html": "~3.2.2",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.3.2",
     "gulp-coveralls": "^0.1.4",

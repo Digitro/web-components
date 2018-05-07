@@ -1,78 +1,84 @@
 
 <script>
-    const DGT_ELEMENTS_TEMPLATES = new Map();
-    class DGTElement extends HTMLElement {
-        constructor() {
-            super();
-            this.template = DGT_ELEMENTS_TEMPLATES.get(this.tagName);
-            const shady = this.attachShadow({mode: 'closed'});
-            const instance = this.template.content.cloneNode(true);
-            shady.appendChild(instance);
-        }
-        set properties(properties) {
-            for (let prop of properties) {
-                if (prop.value !== undefined) {
-                    this.setAttribute(prop.attribute, prop.value);
-                }
-                if (prop.reflectToAttribute) {
-                    let _let = new MutationObserver(this.mutationObserverCallback.bind(this));
-                    _let.observe(this, {attributes: true});
-                }
-                this[prop.attribute] = new Proxy(prop, {
-                    get: this.__get.bind(this),
-                    set: this.__set.bind(this)
-                });
-            }
-        }
+    (function(window) {
+        const DGT_ELEMENTS_TEMPLATES = new Map();
 
-        __get(target, name) {
-            if (!(name in target)) {
-                return null;
+        class DGTElement extends HTMLElement {
+            constructor() {
+                super();
+                this.template = DGT_ELEMENTS_TEMPLATES.get(this.tagName);
+                const shady = this.attachShadow({mode: 'closed'});
+                const instance = this.template.content.cloneNode(true);
+                shady.appendChild(instance);
             }
-            return target[name];
-        }
 
-        __set(target, name, newValue) {
-            let oldValue = target[name] || null;
-            target[name] = newValue;
-            if (target.reflectToAttribute) {
-                if (newValue !== null && newValue !== undefined) {
-                    this.setAttribute(target.attribute, newValue);
-                } else {
-                    this.removeAttribute(target.attribute);
+            set properties(properties) {
+                for (let prop of properties) {
+                    if (prop.value !== undefined) {
+                        this.setAttribute(prop.attribute, prop.value);
+                    }
+                    if (prop.reflectToAttribute) {
+                        let _let = new MutationObserver(this.mutationObserverCallback.bind(this));
+                        _let.observe(this, {attributes: true});
+                    }
+                    this[prop.attribute] = new Proxy(prop, {
+                        get: this.__get.bind(this),
+                        set: this.__set.bind(this)
+                    });
                 }
             }
-            if (target.observer) {
-                target.observer(target, oldValue, newValue);
-            }
-            if (target.global) {
-                let eventName = 'changed' + this.__capitalize(target.attribute);
-                this.dispatchEvent(new CustomEvent(eventName, {
-                    detail: {oldValue, newValue}
-                }));
-            }
-            return true;
-        }
 
-        __capitalize(str) {
-            return str.charAt(0).toUpperCase() + str.slice(1);
-        }
+            __get(target, name) {
+                if (!(name in target)) {
+                    return null;
+                }
+                return target[name];
+            }
 
-        mutationObserverCallback(mutations) {
-            for (let mutation of mutations) {
-                let target = mutation.target;
-                let newValue = target.getAttribute(mutation.attributeName);
-                if (this.disabled.value !== newValue) {
-                    this.disabled.value = newValue;
+            __set(target, name, newValue) {
+                let oldValue = target[name] || null;
+                target[name] = newValue;
+                if (target.reflectToAttribute) {
+                    if (newValue !== null && newValue !== undefined) {
+                        this.setAttribute(target.attribute, newValue);
+                    } else {
+                        this.removeAttribute(target.attribute);
+                    }
+                }
+                if (target.observer) {
+                    target.observer(target, oldValue, newValue);
+                }
+                if (target.global) {
+                    let eventName = 'changed' + this.__capitalize(target.attribute);
+                    this.dispatchEvent(new CustomEvent(eventName, {
+                        detail: {oldValue, newValue}
+                    }));
+                }
+                return true;
+            }
+
+            __capitalize(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            mutationObserverCallback(mutations) {
+                for (let mutation of mutations) {
+                    let target = mutation.target;
+                    let newValue = target.getAttribute(mutation.attributeName);
+                    if (this.disabled.value !== newValue) {
+                        this.disabled.value = newValue;
+                    }
                 }
             }
+
+            static registerElement(componentId, componentClass) {
+                DGT_ELEMENTS_TEMPLATES.set(componentId.toUpperCase(),
+                    (document.currentScript ? document.currentScript.ownerDocument : document).getElementById(componentId));
+                customElements.define(componentId, componentClass);
+            }
         }
 
-        static registerElement(componentId, componentClass){
-            DGT_ELEMENTS_TEMPLATES.set(componentId.toUpperCase(),
-                (document.currentScript ? document.currentScript.ownerDocument : document).getElementById(componentId));
-            customElements.define(componentId, componentClass);
-        }
-    }
+        window.DGTElement = DGTElement;
+    })(window);
 
 </script>
