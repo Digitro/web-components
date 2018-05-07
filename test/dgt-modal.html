@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DGT Modal</title>
+    <script src="../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../bower_components/web-component-tester/browser.js"></script>
+    <link rel="import" href="../src/dgt-modal/dgt-modal.html">
+</head>
+
+<body>
+    <test-fixture id="dgt-modal-fixture">
+        <template>
+            <dgt-modal>
+                <header slot="header">
+                    HEADER
+                    <button slot="close-button">Fechar</button>
+                </header>
+                <div slot="content">
+                    CONTENT
+                </div>
+                <div slot="footer">
+                    FOOTER
+                </div>
+            </dgt-modal>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="dgt-modal-fixture-opened">
+        <template>
+            <dgt-modal opened>
+                <header slot="header">
+                    HEADER
+                    <button slot="close-button">Fechar</button>
+                </header>
+                <div slot="content">
+                    CONTENT
+                </div>
+                <div slot="footer">
+                    FOOTER
+                </div>
+            </dgt-modal>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="new-dgt-modal-fixture">
+        <template>
+            <div></div>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="document-create-element-dgt-modal-fixture">
+        <template>
+            <div></div>
+        </template>
+    </test-fixture>
+
+    <script>
+
+        /* globals DGTModal */
+        let _buildModalHTML = function (modal) {
+            let header = document.createElement('header');
+            let content = document.createElement('div');
+            let footer = document.createElement('footer');
+
+            header.innerHTML = 'Test header';
+            header.setAttribute('slot', 'header');
+            content.innerHTML = '<div id="myContent">myContent</div>';
+            content.setAttribute('slot', 'content');
+            footer.innerHTML = 'Test footer';
+            footer.setAttribute('slot', 'footer');
+
+            modal.appendChild(header);
+            modal.appendChild(content);
+            modal.appendChild(footer);
+
+            return modal;
+        };
+
+        let _testOpenAndClose = function (modal) {
+            assert.equal(modal.hasAttribute('opened'), false);
+            //Check element visible
+            assert.isNull(modal.offsetParent);
+            modal.open();
+            assert.equal(modal.hasAttribute('opened'), true);
+            assert.isNotNull(modal.offsetParent);
+            modal.close();
+            assert.equal(modal.hasAttribute('opened'), false);
+            assert.isNull(modal.offsetParent);
+        };
+
+        suite('<dgt-modal> Using static HTML', function () {
+            let modal;
+            setup(function () {
+                modal = fixture('dgt-modal-fixture');
+            });
+            test('Open and close modal', function () {
+                return _testOpenAndClose(modal);
+            });
+        });
+
+        suite('<dgt-modal opened>', function () {
+            let modal;
+            setup(function () {
+                modal = fixture('dgt-modal-fixture-opened');
+            });
+            test('Open and close modal', function () {
+                assert.equal(modal.hasAttribute('opened'), true);
+                assert.isNotNull(modal.offsetParent);
+            });
+        });
+
+        suite('<dgt-modal> Using new DGTModal()', function () {
+            let element;
+            let modal;
+            setup(function () {
+                element = fixture('new-dgt-modal-fixture');
+                modal = _buildModalHTML(new DGTModal());
+                element.appendChild(modal);
+            });
+
+            test('Open and close modal', function () {
+                return _testOpenAndClose(modal);
+            });
+        });
+
+        suite('<dgt-modal> Using document.createElement(\'dgt-modal\')', function () {
+            let element;
+            let modal;
+            setup(function () {
+                element = fixture('document-create-element-dgt-modal-fixture');
+                modal = _buildModalHTML(document.createElement('dgt-modal'));
+                element.appendChild(modal);
+            });
+            test('Open and close modal', function () {
+                return _testOpenAndClose(modal);
+            });
+        });
+
+    </script>
+</body>
+
+</html>
