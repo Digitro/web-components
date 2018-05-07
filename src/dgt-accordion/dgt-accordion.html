@@ -41,6 +41,7 @@
         connectedCallback() {
             this.header = this.querySelector('[slot=header]');
             if (!this.header) {
+                console.error('Could not attach dgt-accordion without header');
                 return;
             }
             this.header.addEventListener('click', this._toggleAccordion.bind(this));

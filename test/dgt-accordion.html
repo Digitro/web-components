@@ -22,6 +22,16 @@
         </template>
     </test-fixture>
 
+     <test-fixture id="dgt-accordion-fixture-without-header">
+        <template>
+            <dgt-accordion>
+                <section slot="content">
+                    SECTION
+                </section>
+            </dgt-accordion>
+        </template>
+    </test-fixture>
+
     <test-fixture id="new-dgt-accordion-fixture">
         <template>
             <div></div>
@@ -62,6 +72,20 @@
             });
             test('Open and close accordion', function() {
                 return _testOpenAndClose(accordion);
+            });
+        });
+
+        suite('<dgt-accordion> without header', function() {
+            let accordion;
+            setup(function() {
+                accordion = fixture('dgt-accordion-fixture-without-header');
+            });
+
+            sinon.stub(console, 'error');
+
+            test('<dgt-accordion> without header must log error', function(){
+                expect(console.error.calledOnce).to.be.true;
+                expect(console.error.calledWith('Could not attach dgt-accordion without header')).to.be.true;
             });
         });
 
