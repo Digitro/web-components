@@ -1,29 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
     <script src="../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
-    <link rel="import" href="dgt-hello/dgt-hello.html">
-    <link rel="import" href="dgt-hello-bla/dgt-hello-bla.html">
+    <link rel="import" href="dgt-accordion/dgt-accordion.html">
+    <link rel="import" href="dgt-modal/dgt-modal.html">
 </head>
+
 <body>
-<dgt-hello>
-    <span slot="goonies">Wellington</span>
-</dgt-hello>
-<dgt-hello-bla>
-    <span slot="goonies">Geraldo</span>
-</dgt-hello-bla>
+    <button id="open">Open</button>
+    <script>
 
-<script>
+        document.addEventListener('WebComponentsReady', function () {
+            /* global DGTAccordion */
+            const accordion = new DGTAccordion();
+            /* globals DGTModal */
+            const myModal = new DGTModal();
+            let modalHeader = document.createElement('header');
+            let modalContent = document.createElement('div');
+            let modalFooter = document.createElement('footer');
+            let closeButton = document.createElement('button');
 
-    let hello = document.createElement('dgt-hello');
-    let span = document.createElement('span');
-    span.setAttribute('slot', 'goonies');
-    span.innerHTML = 'Teste';
-    hello.appendChild(span);
-    document.body.appendChild(hello);
+            const accordionHeader = document.createElement('header');
+            accordionHeader.innerHTML = 'Accordion';
+            accordionHeader.setAttribute('slot', 'header');
+            const accordionContent = document.createElement('section');
+            accordionContent.setAttribute('slot', 'content');
+            accordionContent.innerHTML = 'Content';
 
-</script>
+            accordion.appendChild(accordionHeader);
+            accordion.appendChild(accordionContent);
+
+            let open = document.querySelector('#open');
+            open.addEventListener('click', function () {
+                modalHeader.innerHTML = 'MyHeader';
+                modalHeader.setAttribute('slot', 'header');
+
+                modalContent.appendChild(accordion);
+                modalContent.setAttribute('slot', 'content');
+
+                modalFooter.innerHTML = 'Footer';
+                modalFooter.setAttribute('slot', 'footer');
+                closeButton.addEventListener('click', function () {
+                    myModal.close();
+                });
+                closeButton.innerHTML = 'Close';
+                closeButton.setAttribute('slot', 'close-button');
+
+                myModal.appendChild(modalHeader);
+                myModal.appendChild(modalContent);
+                myModal.appendChild(modalFooter);
+                myModal.appendChild(closeButton);
+
+                document.body.appendChild(myModal);
+                myModal.open();
+
+            });
+        });
+    </script>
 </body>
+
 </html>
