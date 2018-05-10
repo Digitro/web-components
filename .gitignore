@@ -46,3 +46,4 @@ fabric.properties
 /npm-debug.log
 
 src/*/css
+coverage
