@@ -66,20 +66,24 @@
         constructor(){
             super();
         }
-        connectedCallback(){
-            this._setListeners();
-        }
-        _setListeners(){
-            this.closeButton = this.querySelector('[slot=close-button]');
-            if(this.closeButton){
-                this.closeButton.addEventListener('click', this.close.bind(this));
-            }
-        }
         open(){
             this.setAttribute('opened', '');
+            this.fire('open', this);
         }
         close(){
-            this.removeAttribute('opened');
+            // se tiver callback para fechar a modal
+            let closeModal = true;
+            if(this._beforeClose){
+                closeModal = this._beforeClose();
+            }
+            if(closeModal) {
+                this.removeAttribute('opened');
+                this.fire('close', this);
+            }
+
+        }
+        set beforeClose(beforeClose){
+            this._beforeClose = beforeClose;
         }
     }
     DGTElement.registerElement('dgt-modal', DGTModal);
