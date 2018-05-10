@@ -5,6 +5,7 @@
     "fixture": true,
     "setup": true,
     "suite": true,
+    "suiteSetup": true,
     "expect": true,
     "sinon": true,
     "assert": true

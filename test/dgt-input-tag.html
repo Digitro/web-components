@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DGT Modal</title>
+    <script src="../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../bower_components/web-component-tester/browser.js"></script>
+    <script src="./utils/EventUtils.js"></script>
+
+    <link rel="import" href="../src/dgt-input-tag/dgt-input-tag.html">
+    <style>
+        .red {
+            color: red;
+        }
+        .bold {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+<test-fixture id="dgt-input-tag-fixture">
+    <template>
+        <dgt-input-tag>
+            <input slot="input">
+            <div slot="container"></div>
+        </dgt-input-tag>
+    </template>
+</test-fixture>
+
+<test-fixture id="empty-fixture">
+    <template>
+        <div></div>
+    </template>
+</test-fixture>
+
+<test-fixture id="custom-items-fixture">
+    <template>
+        <dgt-input-tag item-tag="li" item-class="bold red">
+            <input slot="input">
+            <ul slot="container"></ul>
+        </dgt-input-tag>
+    </template>
+</test-fixture>
+
+<script>
+    /* globals DGTInputTag, EventUtils*/
+
+    let _buildComponentHTML = function(component){
+        const input = document.createElement('input');
+        input.setAttribute('slot', 'input');
+        component.appendChild(input);
+
+        const container = document.createElement('div');
+        container.setAttribute('slot', 'container');
+        component.appendChild(container);
+
+        return component;
+    };
+
+
+    suite('<dgt-input-tag> Using static HTML', function () {
+        let component;
+        setup(function () {
+            component = fixture('dgt-input-tag-fixture');
+        });
+
+        test('<dgt-input-tag> created', function () {
+            assert.isNotNull(component);
+        });
+    });
+
+    suite('<dgt-input-tag> Using new DGTInputTag()', function () {
+        let element;
+        let component;
+        setup(function () {
+            element = fixture('empty-fixture');
+            component = _buildComponentHTML(new DGTInputTag());
+            element.appendChild(component);
+        });
+
+        test('<dgt-input-tag> created', function () {
+            assert.isNotNull(component);
+        });
+    });
+
+    suite('<dgt-input-tag> Using document.createElement(\'dgt-input-tag\')', function () {
+        let element;
+        let component;
+        setup(function () {
+            element = fixture('empty-fixture');
+            component = document.createElement('dgt-input-tag');
+            component = _buildComponentHTML(component);
+            element.appendChild(component);
+        });
+        test('<dgt-input-tag> created', function () {
+            assert.isNotNull(component);
+        });
+    });
+
+    suite('<dgt-input-tag> without input', function() {
+        let component;
+        let element;
+        let errorStub;
+
+        suiteSetup(function() {
+            errorStub = sinon.stub(DGTElement, 'error');
+        });
+
+        setup(function () {
+            element = fixture('empty-fixture');
+            component = new DGTInputTag();
+            errorStub.reset();
+        });
+
+        test('<dgt-input-tag> without an input must log error', function(){
+            assert(component);
+            element.appendChild(component);
+            expect(DGTElement.error.calledOnce).to.be.true;
+            expect(DGTElement.error.calledWith('Could not attach dgt-input-tag without an input')).to.be.true;
+        });
+
+        test('<dgt-input-tag> without a container must log error', function(){
+            assert(component);
+
+            const input = document.createElement('input');
+            input.setAttribute('slot', 'input');
+            component.appendChild(input);
+
+            element.appendChild(component);
+            expect(DGTElement.error.calledOnce).to.be.true;
+            expect(DGTElement.error.calledWith('Could not attach dgt-input-tag without a container')).to.be.true;
+        });
+    });
+
+    suite('<dgt-input-tag> enter a new value', function () {
+        let component;
+
+        setup(function () {
+            component = fixture('dgt-input-tag-fixture');
+        });
+
+        test('<dgt-input-tag> submit() must add a new tag', function () {
+            assert.isNotNull(component);
+            const input = component.querySelector('[slot=input]');
+            const text = 'tag 1';
+            input.value = text;
+            component.submit();
+            assert.equal(component.value.length, 1);
+            assert.equal(component.value[0], text);
+        });
+
+        test('<dgt-input-tag> event "keydown(key===\'Enter\')" must add a new tag', function () {
+            assert.isNotNull(component);
+            const input = component.querySelector('[slot=input]');
+            const text = 'tag 1';
+            EventUtils.type(text, input);
+            assert.equal(input.value, text);
+            EventUtils.type(EventUtils.Keys.Enter, input);
+            assert.equal(component.value.length, 1);
+            assert.equal(component.value[0], text);
+        });
+    });
+
+    suite('<dgt-input-tag> with custom tags for items', function () {
+        let component;
+
+        setup(function () {
+            component = fixture('custom-items-fixture');
+        });
+
+        test('added items must be the tag specified in the attribute \'item-tag\'', function() {
+            const itemTag = component.getAttribute('item-tag');
+            const input = component.querySelector('[slot=input]');
+            const text = 'tag 1';
+            EventUtils.type(text, input);
+            assert.equal(input.value, text);
+
+            EventUtils.type(EventUtils.Keys.Enter, input);
+            assert.equal(component.value.length, 1);
+            assert.equal(component.value[0], text);
+
+            const item = component.querySelector('[slot=container] :first-child');
+            assert.isNotNull(item);
+            assert.equal(item.tagName, itemTag.toUpperCase());
+            assert.equal(item.innerText, text);
+        });
+
+        test('added items must be have the classes specified in the attribute \'item-class\'', function() {
+            const itemClass = component.getAttribute('item-class');
+            const input = component.querySelector('[slot=input]');
+            const text = 'tag 1';
+            EventUtils.type(text, input);
+            assert.equal(input.value, text);
+
+            EventUtils.type(EventUtils.Keys.Enter, input);
+            assert.equal(component.value.length, 1);
+            assert.equal(component.value[0], text);
+
+            const item = component.querySelector('[slot=container] :first-child');
+            assert.isNotNull(item);
+            assert.isTrue(item.hasAttribute('class'));
+            assert.equal(item.getAttribute('class'), itemClass);
+
+        });
+    });
+
+    suite('<dgt-input-tag> edit a value', function () {
+        let component;
+        let input;
+        const text = 'tag 1';
+
+        setup(function () {
+            component = fixture('dgt-input-tag-fixture');
+            assert.isNotNull(component);
+
+            input = component.querySelector('[slot=input]');
+            input.value = text;
+            component.submit();
+
+            assert.equal(component.value.length, 1);
+            assert.equal(component.value[0], text);
+        });
+
+        test('<dgt-input-tag> click on item must load the value for editing', function () {
+            const item = component.querySelector('[slot=container] :first-child');
+            assert.isNotNull(item);
+            item.click();
+            assert.equal(input.value, text);
+            assert.isTrue(component.isEditing());
+        });
+
+        test('<dgt-input-tag> submit() when editing must change the item value', function () {
+            const item = component.querySelector('[slot=container] :first-child');
+            assert.isNotNull(item);
+            item.click();
+            assert.equal(input.value, text);
+            assert.isTrue(component.isEditing());
+
+            input.value = 'new value';
+
+            component.submit();
+            assert.isFalse(component.isEditing());
+            assert.equal(component.value.length, 1);
+            assert.equal(component.value[0], 'new value');
+        });
+
+        test('<dgt-input-tag> value edit when the item has been removed must create a new item', function () {
+            const item = component.querySelector('[slot=container] :first-child');
+            assert.isNotNull(item);
+            item.click();
+            assert.equal(input.value, text);
+            assert.isTrue(component.isEditing());
+
+            input.value = 'new value';
+
+            item.parentNode.removeChild(item);
+            assert.equal(component.value.length, 0);
+
+            component.submit();
+            assert.isFalse(component.isEditing());
+            assert.equal(component.value.length, 1);
+            assert.equal(component.value[0], 'new value');
+        });
+    });
+
+
+    suite('<dgt-input-tag> edit the value attribute', function () {
+        let component;
+        const text = 'tag 1';
+
+        setup(function () {
+            component = fixture('dgt-input-tag-fixture');
+            assert.isNotNull(component);
+        });
+
+        test('value property must be Array', function () {
+            assert.typeOf(component.value, 'array');
+        });
+
+
+        test('when value.length === 0, isEmpty() must be true', function() {
+            assert.equal(component.value.length, 0);
+            assert.isTrue(component.isEmpty());
+        });
+
+        test('value.length must be === the number of tags added', function() {
+            const text2 = 'text 2';
+            const input = component.querySelector('[slot=input]');
+
+            assert.equal(component.value.length, 0);
+            assert.isTrue(component.isEmpty());
+
+            input.value = text;
+            component.submit();
+
+            assert.equal(component.value.length, 1);
+            assert.equal(component.value[0], text);
+
+            input.value = text2;
+            component.submit();
+
+            assert.equal(component.value.length, 2);
+            assert.equal(component.value[0], text);
+            assert.equal(component.value[1], text2);
+        });
+
+        test('set value attribute must create items in dom', function() {
+            component.value = ['tag1', 'tag2'];
+            const items = component.querySelectorAll('[slot=container] [dgt-input-tag-item]');
+            assert.equal(items.length, 2);
+        });
+
+        test('set value attribute after items have been added, remove the old items and add the new items in dom', function() {
+            component.value = ['tag1', 'tag2'];
+            let items = component.querySelectorAll('[slot=container] [dgt-input-tag-item]');
+            assert.equal(items.length, 2);
+            assert.equal(items[0].innerText, 'tag1');
+            assert.equal(items[1].innerText, 'tag2');
+
+            component.value = ['tag3', 'tag4'];
+            items = component.querySelectorAll('[slot=container] [dgt-input-tag-item]');
+            assert.equal(items.length, 2);
+            assert.equal(items[0].innerText, 'tag3');
+            assert.equal(items[1].innerText, 'tag4');
+        });
+
+    });
+
+</script>
+</body>
+
+</html>

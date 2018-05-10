@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DGT Input Tag</title>
+    <script src="../../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <link rel="import" href="dgt-input-tag.html">
+    <style>
+        .red {
+            color: red;
+        }
+        .bold {
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+<h3>Simple</h3>
+
+<dgt-input-tag>
+    <input slot="input">
+    <div slot="container"></div>
+</dgt-input-tag>
+
+<hr/>
+<h3>Custom tags and class</h3>
+
+<dgt-input-tag item-tag="li" item-class="red bold">
+    <input slot="input">
+    <ol slot="container"></ol>
+</dgt-input-tag>
+
+<script>
+    document.addEventListener('WebComponentsReady', function() {
+
+
+    });
+</script>
+</body>
+</html>

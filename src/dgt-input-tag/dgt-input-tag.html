@@ -1,0 +1,132 @@
+<link rel="import" href="../dgt-element/dgt-element.html">
+<template>
+    <style>
+        /* Firefox */
+        dgt-input-tag {
+            display: block;
+        }
+
+        /* Chrome */
+        :host {
+            display: block;
+        }
+
+    </style>
+    <slot name="input"></slot>
+    <slot name="container"></slot>
+</template>
+
+<script>
+    class DGTInputTag extends DGTElement {
+
+        constructor(){
+            super();
+            this.__valueAttribute = 'dgtValue';
+        }
+
+        get value() {
+            const tags = [];
+            const items = this.querySelectorAll('[dgt-input-tag-item]');
+            for (const item of items) {
+                tags.push(item[this.__valueAttribute]);
+            }
+            return tags;
+        }
+
+        set value(values) {
+            const items = this.querySelectorAll('[dgt-input-tag-item]');
+            for (const item of items) {
+                item.parentNode.removeChild(item);
+            }
+            for (const value of values) {
+                this.__createTagComponent(value);
+            }
+        }
+
+        isEditing() {
+            return this.__editing;
+        }
+
+        isEmpty() {
+            return this.querySelector('[dgt-input-tag-item]') === null;
+        }
+
+        connectedCallback() {
+            this.__input = this.querySelector('[slot=input]');
+            if (!this.__input) {
+                DGTElement.error('Could not attach dgt-input-tag without an input');
+                return;
+            }
+            this.__input.addEventListener('keyup', this.__onKeyUp.bind(this));
+
+            this.__container = this.querySelector('[slot=container]');
+            if (!this.__container) {
+                DGTElement.error('Could not attach dgt-input-tag without a container');
+                return;
+            }
+        }
+
+        submit() {
+            const value = this.__input.value;
+            if (this.__editing) {
+                this.__endEdit(value);
+            } else {
+                this.__createTag(value);
+            }
+        }
+
+        __onKeyUp(evt) {
+            if (evt.key === 'Enter') {
+                this.submit();
+            }
+        }
+
+        __createTag(value) {
+            this.__createTagComponent(value);
+            this.__input.value = '';
+        }
+
+        __createTagComponent(value) {
+            const tag = this.hasAttribute('item-tag') ? this.getAttribute('item-tag') : 'option';
+            const comp = document.createElement(tag);
+            comp.innerText = value;
+
+            if (this.hasAttribute('item-class')) {
+                comp.setAttribute('class', this.getAttribute('item-class'));
+            }
+
+            comp.addEventListener('click', this.__tagOnClickListener.bind(this));
+            comp.setAttribute('dgt-input-tag-item', '');
+            comp[this.__valueAttribute] = value;
+
+            const container = this.querySelector('[slot=container]');
+            container.appendChild(comp);
+
+            return comp;
+        }
+
+        __tagOnClickListener(evt) {
+            this.__beginEdit(evt.target);
+        }
+
+        __beginEdit(item) {
+            this.__input.value = item[this.__valueAttribute];
+            this.__editing = true;
+            this.__editItem = item;
+        }
+
+        __endEdit(value) {
+            if (!this.__editItem.offsetParent) {
+                this.__createTagComponent(value);
+            } else {
+                this.__editItem[this.__valueAttribute] = value;
+                this.__editItem.innerText = value;
+            }
+            this.__editing = false;
+            this.__editItem = null;
+            this.__input.value = '';
+        }
+
+    }
+    DGTElement.registerElement('dgt-input-tag', DGTInputTag);
+</script>
