@@ -125,14 +125,14 @@
             });
 
             test('Open is fired', function(){
-                let stub = sinon.stub()
+                let stub = sinon.stub();
                 modal.listen('open', stub);
                 modal.open();
                 expect(stub.calledOnce).to.be.true;
             });
 
             test('Close is fired', function(){
-                let stub = sinon.stub()
+                let stub = sinon.stub();
                 modal.listen('close', stub);
                 modal.open();
                 modal.close();
