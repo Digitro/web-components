@@ -46,12 +46,12 @@
                     }
                 }
                 if (target.observer) {
-                    target.observer(target, oldValue, newValue);
+                    target.observer(target, newValue, oldValue);
                 }
                 if (target.global) {
                     let eventName = 'changed' + this.__capitalize(target.attribute);
                     this.dispatchEvent(new CustomEvent(eventName, {
-                        detail: {oldValue, newValue}
+                        detail: {newValue, oldValue}
                     }));
                 }
                 return true;
@@ -71,13 +71,21 @@
                 }
             }
 
+            fire(eventName, data){
+                this.dispatchEvent(new CustomEvent(eventName, {
+                    detail: data
+                }));
+            }
+            listen(eventName, fn){
+                this.addEventListener(eventName, fn);
+            }
             static registerElement(componentId, componentClass) {
                 let query = '[href*=' + componentId + '] template';
                 if (!window.ShadyDOM) {
                     query = 'template';
                 }
                 DGT_ELEMENTS_TEMPLATES.set(componentId.toUpperCase(),
-                    (document.currentScript ? document.currentScript.ownerDocument : document).querySelector(query));
+                    document.currentScript.ownerDocument.querySelector(query));
                 customElements.define(componentId, componentClass);
             }
 
