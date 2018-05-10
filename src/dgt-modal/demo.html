@@ -33,30 +33,40 @@
             let footer = document.createElement('footer');
             let closeButton = document.createElement('button');
 
+            myModal.listen('open', function(e){
+                console.log("openEvent", e);
+            });
+
+            myModal.listen('close', function(e){
+                console.log("closeEvent", e);
+            });
+
+            closeButton.addEventListener('click', function(){
+                myModal.close();
+            });
+
+            header.innerHTML = 'MyHeader';
+            header.setAttribute('slot', 'header');
+            content.innerHTML = '<div id="buttonContent">ButtonContent</div><button id="colorChange">Change</button>';
+            content.setAttribute('slot', 'content');
+            footer.innerHTML = 'Footer';
+            footer.setAttribute('slot', 'footer');
+
+            closeButton.innerHTML = 'Close';
+            closeButton.setAttribute('slot', 'close-button');
+
+            myModal.appendChild(header);
+            myModal.appendChild(content);
+            myModal.appendChild(footer);
+            myModal.appendChild(closeButton);
+
+            document.body.appendChild(myModal);
+            document.querySelector('#colorChange').addEventListener('click', function(){
+                this.style.background = 'red';
+            });
+
             let abrir = document.querySelector('#abrir');
             abrir.addEventListener('click', function(){
-
-                header.innerHTML = 'MyHeader';
-                header.setAttribute('slot', 'header');
-                content.innerHTML = '<div id="buttonContent">ButtonContent</div><button id="colorChange">Change</button>';
-                content.setAttribute('slot', 'content');
-                footer.innerHTML = 'Footer';
-                footer.setAttribute('slot', 'footer');
-                closeButton.addEventListener('click', function(){
-                    myModal.close();
-                });
-                closeButton.innerHTML = 'Close';
-                closeButton.setAttribute('slot', 'close-button');
-
-                myModal.appendChild(header);
-                myModal.appendChild(content);
-                myModal.appendChild(footer);
-                myModal.appendChild(closeButton);
-
-                document.body.appendChild(myModal);
-                document.querySelector('#colorChange').addEventListener('click', function(){
-                    this.style.background = 'red';
-                });
                 myModal.open();
             });
 
