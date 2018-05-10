@@ -123,6 +123,37 @@
             test('Open and close modal', function () {
                 return _testOpenAndClose(modal);
             });
+
+            test('Open is fired', function(){
+                let stub = sinon.stub()
+                modal.listen('open', stub);
+                modal.open();
+                expect(stub.calledOnce).to.be.true;
+            });
+
+            test('Close is fired', function(){
+                let stub = sinon.stub()
+                modal.listen('close', stub);
+                modal.open();
+                modal.close();
+                expect(stub.calledOnce).to.be.true;
+            });
+            test('beforeClose returns false', function(){
+                modal.beforeClose = function(){
+                    return false;
+                };
+                modal.open();
+                modal.close();
+                assert.equal(modal.hasAttribute('opened'), true);
+            });
+            test('beforeClose returns true', function(){
+                modal.beforeClose = function(){
+                    return true;
+                };
+                modal.open();
+                modal.close();
+                assert.equal(modal.hasAttribute('opened'), false);
+            });
         });
 
         suite('<dgt-modal> Using document.createElement(\'dgt-modal\')', function () {
