@@ -1,0 +1,97 @@
+<link rel="import" href="../dgt-element/dgt-element.html">
+<template>
+    <style>
+        /* Firefox */
+        @keyframes DefaultAnimation {
+            0% {
+                transform: translateY(-100%);
+            }
+            100% {
+                transform: translateY(0%);
+            }
+        }
+
+        dgt-toast {
+            position: fixed;
+        }
+
+        dgt-toast:not([visible]) {
+            transition: var(--dgt-transition, all .2s);
+            transform: var(--dgt-transform, translateY(-100%));
+        }
+
+        dgt-toast[visible] {
+            animation: var(--dgt-animation, DefaultAnimation .2s ease-out);
+        }
+
+        /* Chrome */
+        :host {
+            position: fixed;
+        }
+
+        :host(:not([visible])) {
+            transition: var(--dgt-transition, all .2s);
+            transform: var(--dgt-transform, translateY(0%));
+        }
+
+        :host([visible]) {
+            animation: var(--dgt-animation, DefaultAnimation .2s ease-out);
+        }
+    </style>
+    <slot></slot>
+</template>
+<script>
+    class DGTToast extends DGTElement {
+        constructor() {
+            super();
+        }
+
+        connectedCallback() {
+            this.queue = [];
+            this.timeoutDefault = 3000;
+        }
+
+        showMessage(className, content, timeout = this.timeoutDefault) {
+            this.queue.push({
+                className,
+                content,
+                timeout
+            });
+            if (this.showing) {
+                return;
+            }
+            this.__show(this.queue.shift());
+        }
+
+        __show(props) {
+            this.showing = true;
+            if (props.content.nodeType === Node.ELEMENT_NODE) {
+                this.innerHTML = '';
+                this.appendChild(props.content);
+            } else {
+                this.innerHTML = props.content;
+            }
+            this.classList.add(props.className);
+            this.setAttribute('visible', '');
+            new Promise(resolve => {
+                setTimeout(this.__hide.bind(this, props, resolve), props.timeout);
+            }).then(this.__showNext.bind(this));
+        }
+
+        __hide(props, resolve) {
+            this.removeAttribute('visible');
+            this.classList.remove(props.className);
+            this.addEventListener('transitionend', resolve);
+        }
+
+        __showNext() {
+            if (this.queue.length) {
+                this.__show(this.queue.shift());
+                return;
+            }
+            this.showing = false;
+        }
+    }
+
+    DGTElement.registerElement('dgt-toast', DGTToast);
+</script>

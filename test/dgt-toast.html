@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DGT Toast</title>
+    <script src="../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../bower_components/web-component-tester/browser.js"></script>
+    <link rel="import" href="../src/dgt-toast/dgt-toast.html">
+</head>
+<body>
+
+    <test-fixture id="dgt-toast-fixture">
+        <template>
+            <dgt-toast>
+            </dgt-toast>
+        </template>
+    </test-fixture>
+
+     <test-fixture id="dgt-toast-fixture-without-header">
+        <template>
+            <div></div>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="new-dgt-toast-fixture">
+        <template>
+            <div></div>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="document-create-element-dgt-toast-fixture">
+        <template>
+            <div></div>
+        </template>
+    </test-fixture>
+
+    <script>
+
+        let defaultTimeoutTest = function(toast, done){
+            toast.timeoutDefault = 100;
+            toast.showMessage('success',"Sucesso");
+            setTimeout(function() {
+                expect(toast.getAttribute('visible')).to.be.equal(null);
+                done();
+            }, 500);
+        };
+
+        let toastMessageContent = function(toast, done){
+            toast.showMessage('toast-success',"Success!",200);
+            expect(toast.textContent.trim()).to.be.equal('Success!');
+            done();
+        };
+
+        let toastHTMLContent = function(toast, done){
+            let paragraph =document.createElement("p");
+            paragraph.innerHTML = "Success!";
+            toast.showMessage('toast-success',paragraph,200);
+            expect(toast.querySelector('p').textContent.trim()).to.be.equal('Success!');
+            done();
+        };
+
+        let toastCustomCssClass = function(toast, done){
+            toast.showMessage('toast-success',"Success!",200);
+            expect('toast-success').to.be.oneOf(Array.from(toast.classList));
+            done();
+        }
+
+        let queueMessages = function(toast, done){
+            toast.showMessage('info','Info message',200);
+            toast.showMessage('error','Error message',200);
+            expect(toast.textContent.trim()).to.be.equal('Info message');
+            setTimeout(function() {
+                expect(toast.textContent.trim()).to.be.equal('Error message');
+                done();
+            }, 500);
+        }
+
+        let hideMessage = function(toast, done){
+            toast.showMessage('toast-success',"Success!",100);
+            setTimeout(function() {
+                expect(toast.getAttribute('visible')).to.be.equal(null);
+                expect('toast-success').to.not.be.oneOf(Array.from(toast.classList));
+                done();
+            }, 500);
+        };
+
+        suite('<dgt-toast> Using static HTML', function() {
+            let toast;
+            setup(function() {
+                toast = fixture('dgt-toast-fixture');
+            });
+            test('Default timeout value', function(done) {
+               defaultTimeoutTest(toast, done);
+            });
+            test('Message content', function(done) {
+               toastMessageContent(toast, done);
+            });
+            test('HTML content', function(done) {
+                toastHTMLContent(toast, done);
+            });
+            test('Message content', function(done) {
+                toastMessageContent(toast, done);
+            });
+            test('Custom css class', function(done) {
+                toastCustomCssClass(toast, done);
+            });
+            test('Queue messages', function(done) {
+                queueMessages(toast, done);
+            });
+            test('Hide message', function(done) {
+                hideMessage(toast, done);
+            });
+        });
+
+        suite('<dgt-toast> Using new DGTToast()', function() {
+            let element;
+            let toast;
+            setup(function() {
+                element = fixture('new-dgt-toast-fixture');
+                toast = new DGTToast();
+                element.appendChild(toast);
+            });
+            test('Default timeout value', function(done) {
+                defaultTimeoutTest(toast, done);
+            });
+            test('Message content', function(done) {
+                toastMessageContent(toast, done);
+            });
+            test('HTML content', function(done) {
+                toastHTMLContent(toast, done);
+            });
+            test('Message content', function(done) {
+                toastMessageContent(toast, done);
+            });
+            test('Custom css class', function(done) {
+                toastCustomCssClass(toast, done);
+            });
+            test('Queue messages', function(done) {
+                queueMessages(toast, done);
+            });
+            test('Hide message', function(done) {
+                hideMessage(toast, done);
+            });
+        });
+
+        suite('<dgt-toast> Using document.createElement(\'dgt-toast\')', function() {
+            let element;
+            let toast;
+            setup(function() {
+                element = fixture('document-create-element-dgt-toast-fixture');
+                toast = document.createElement('dgt-toast');
+                element.appendChild(toast);
+            });
+            test('Default timeout value', function(done) {
+                defaultTimeoutTest(toast, done);
+            });
+            test('Message content', function(done) {
+                toastMessageContent(toast, done);
+            });
+            test('HTML content', function(done) {
+                toastHTMLContent(toast, done);
+            });
+            test('Message content', function(done) {
+                toastMessageContent(toast, done);
+            });
+            test('Custom css class', function(done) {
+                toastCustomCssClass(toast, done);
+            });
+            test('Queue messages', function(done) {
+                queueMessages(toast, done);
+            });
+            test('Hide message', function(done) {
+                hideMessage(toast, done);
+            });
+        });
+
+    </script>
+
+</body>
+</html>

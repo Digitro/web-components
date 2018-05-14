@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DGT Toast</title>
+    <script src="../../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <link rel="import" href="dgt-toast.html">
+    <style>
+        .info{
+            background: #0066bb;
+        }
+        .success{
+            background: #00d6b2;
+        }
+        .warning{
+            background: #f9cd0b;
+        }
+        .error{
+            background: #cc0000;
+        }
+    </style>
+</head>
+<body>
+   <dgt-toast></dgt-toast>
+
+   <button id="abrir" style="margin-top: 100px">ABRIR</button>
+    <script>
+        document.addEventListener('WebComponentsReady', function() {
+            let dgtToast = document.querySelector('dgt-toast');
+            dgtToast.timeoutDefault = 100;
+            document.querySelector("#abrir").addEventListener('click', function(){
+                dgtToast.showMessage("info", "CONTEUDO asdfadsf asdfadf");
+            });
+
+            let paragraph =document.createElement("p");
+            paragraph.innerHTML = "Paragraph";
+
+            dgtToast.showMessage("info", paragraph);
+            dgtToast.showMessage("success", paragraph);
+            dgtToast.showMessage("warning", "três");
+            dgtToast.showMessage("error", "quatro");
+
+        });
+    </script>
+</body>
+</html>
