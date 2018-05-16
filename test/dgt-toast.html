@@ -35,53 +35,72 @@
     </test-fixture>
 
     <script>
+        /* globals DGTToast */
+        const showTime = 200;
+        const totalAnimTime = showTime*2;
+        const time = 200;
 
         let defaultTimeoutTest = function(toast, done){
             toast.timeoutDefault = 100;
-            toast.showMessage('success',"Sucesso");
+            toast.showMessage('success', 'Success');
             setTimeout(function() {
-                expect(toast.getAttribute('visible')).to.be.equal(null);
+                assert.notEqual(toast.getAttribute('visible'), 'true');
+                assert.isFalse(toast.hasAttribute('visible'));
                 done();
-            }, 500);
+            }, totalAnimTime + toast.timeoutDefault + 50); // 50ms extra to allow dom to change and check for the attribute
         };
 
         let toastMessageContent = function(toast, done){
-            toast.showMessage('toast-success',"Success!",200);
-            expect(toast.textContent.trim()).to.be.equal('Success!');
-            done();
+            toast.showMessage('toast-success', 'Success!', time);
+            setTimeout(function() {
+                expect(toast.textContent.trim()).to.be.equal('Success!');
+                assert.isTrue(toast.hasAttribute('visible'));
+                setTimeout(done, time + showTime);
+            }, showTime);
         };
 
         let toastHTMLContent = function(toast, done){
-            let paragraph =document.createElement("p");
-            paragraph.innerHTML = "Success!";
-            toast.showMessage('toast-success',paragraph,200);
-            expect(toast.querySelector('p').textContent.trim()).to.be.equal('Success!');
-            done();
+            let paragraph =document.createElement('p');
+            paragraph.innerHTML = 'Success!';
+            toast.showMessage('toast-success', paragraph, time);
+
+            setTimeout(function() {
+                expect(toast.querySelector('p').textContent.trim()).to.be.equal('Success!');
+                setTimeout(done, time + showTime);
+            }, showTime);
         };
 
         let toastCustomCssClass = function(toast, done){
-            toast.showMessage('toast-success',"Success!",200);
-            expect('toast-success').to.be.oneOf(Array.from(toast.classList));
-            done();
-        }
+            toast.showMessage('toast-success', 'Success!', time);
+            setTimeout(function() {
+                expect('toast-success').to.be.oneOf(Array.from(toast.classList));
+                setTimeout(done, time + showTime);
+            }, showTime);
+        };
 
         let queueMessages = function(toast, done){
-            toast.showMessage('info','Info message',200);
-            toast.showMessage('error','Error message',200);
-            expect(toast.textContent.trim()).to.be.equal('Info message');
+            toast.showMessage('info','Info message', time);
+            toast.showMessage('error','Error message', time);
+
             setTimeout(function() {
-                expect(toast.textContent.trim()).to.be.equal('Error message');
-                done();
-            }, 500);
-        }
+                expect(toast.textContent.trim()).to.be.equal('Info message');
+
+                setTimeout(function() {
+                    expect(toast.textContent.trim()).to.be.equal('Error message');
+                    setTimeout(done, time+showTime);
+                }, totalAnimTime + time);
+            }, showTime);
+        };
 
         let hideMessage = function(toast, done){
-            toast.showMessage('toast-success',"Success!",100);
+            toast.showMessage('toast-success', 'Success!', 100);
+
             setTimeout(function() {
-                expect(toast.getAttribute('visible')).to.be.equal(null);
+                assert.notEqual(toast.getAttribute('visible'), 'true');
+                assert.isFalse(toast.hasAttribute('visible'));
                 expect('toast-success').to.not.be.oneOf(Array.from(toast.classList));
                 done();
-            }, 500);
+            }, totalAnimTime + 100 + 50);// 50ms extra to allow dom to change and check for the attribute
         };
 
         suite('<dgt-toast> Using static HTML', function() {
@@ -90,16 +109,13 @@
                 toast = fixture('dgt-toast-fixture');
             });
             test('Default timeout value', function(done) {
-               defaultTimeoutTest(toast, done);
-            });
-            test('Message content', function(done) {
-               toastMessageContent(toast, done);
-            });
-            test('HTML content', function(done) {
-                toastHTMLContent(toast, done);
+                defaultTimeoutTest(toast, done);
             });
             test('Message content', function(done) {
                 toastMessageContent(toast, done);
+            });
+            test('HTML content', function(done) {
+                toastHTMLContent(toast, done);
             });
             test('Custom css class', function(done) {
                 toastCustomCssClass(toast, done);
@@ -129,9 +145,6 @@
             test('HTML content', function(done) {
                 toastHTMLContent(toast, done);
             });
-            test('Message content', function(done) {
-                toastMessageContent(toast, done);
-            });
             test('Custom css class', function(done) {
                 toastCustomCssClass(toast, done);
             });
@@ -160,9 +173,6 @@
             test('HTML content', function(done) {
                 toastHTMLContent(toast, done);
             });
-            test('Message content', function(done) {
-                toastMessageContent(toast, done);
-            });
             test('Custom css class', function(done) {
                 toastCustomCssClass(toast, done);
             });
@@ -173,7 +183,6 @@
                 hideMessage(toast, done);
             });
         });
-
     </script>
 
 </body>

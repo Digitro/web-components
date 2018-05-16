@@ -13,29 +13,19 @@
 
         dgt-toast {
             position: fixed;
-        }
-
-        dgt-toast:not([visible]) {
-            transition: var(--dgt-transition, all .2s);
-            transform: var(--dgt-transform, translateY(-100%));
-        }
-
-        dgt-toast[visible] {
             animation: var(--dgt-animation, DefaultAnimation .2s ease-out);
+            animation-play-state: paused;
+            animation-iteration-count: infinite;
+            animation-direction: alternate;
         }
 
         /* Chrome */
         :host {
             position: fixed;
-        }
-
-        :host(:not([visible])) {
-            transition: var(--dgt-transition, all .2s);
-            transform: var(--dgt-transform, translateY(-100%));
-        }
-
-        :host([visible]) {
             animation: var(--dgt-animation, DefaultAnimation .2s ease-out);
+            animation-play-state: paused;
+            animation-iteration-count: infinite;
+            animation-direction: alternate;
         }
     </style>
     <slot></slot>
@@ -49,6 +39,7 @@
         connectedCallback() {
             this.queue = [];
             this.timeoutDefault = 3000;
+            this.addEventListener('animationiteration', this.__onAnimationIteration.bind(this));
         }
 
         showMessage(className, content, timeout = this.timeoutDefault) {
@@ -57,14 +48,14 @@
                 content,
                 timeout
             });
-            if (this.showing) {
+            if (this.showing || this.current) {
                 return;
             }
             this.__show(this.queue.shift());
         }
 
-        __show(props) {
-            this.showing = true;
+        __createToastContent() {
+            const props = this.current;
             if (props.content.nodeType === Node.ELEMENT_NODE) {
                 this.innerHTML = '';
                 this.appendChild(props.content);
@@ -72,24 +63,48 @@
                 this.innerHTML = props.content;
             }
             this.classList.add(props.className);
-            this.setAttribute('visible', '');
-            new Promise(resolve => {
-                setTimeout(this.__hide.bind(this, props, resolve), props.timeout);
-            }).then(this.__showNext.bind(this));
         }
 
-        __hide(props, resolve) {
+        __onAnimationIteration() {
+            this.style.animationPlayState = 'paused';
+
+            if (this.__state === 'showing') {
+                setTimeout(this.__hide.bind(this), this.current.timeout);
+            } else if (this.__state === 'hiding') {
+                this.__onMessageHidden();
+            }
+        }
+
+        __show(props) {
+            this.showing = true;
+            this.current = props;
+            this.__createToastContent();
+            this.__state = 'showing';
+            this.setAttribute('visible', 'true');
+            this.style.animationPlayState = 'running';
+
+        }
+
+        __onMessageHidden() {
+            this.classList.remove(this.current.className);
+            this.setAttribute('visible', 'false');
             this.removeAttribute('visible');
-            this.classList.remove(props.className);
-            this.addEventListener('transitionend', resolve);
+            this.showing = false;
+            this.current = null;
+            this.innerHTML = '';
+            this.__showNext();
+        }
+
+        __hide() {
+            this.__state = 'hiding';
+            this.style.animationPlayState = 'running';
         }
 
         __showNext() {
             if (this.queue.length) {
                 this.__show(this.queue.shift());
-                return;
             }
-            this.showing = false;
+
         }
     }
 

@@ -28,8 +28,10 @@
         document.addEventListener('WebComponentsReady', function() {
             let dgtToast = document.querySelector('dgt-toast');
             dgtToast.timeoutDefault = 100;
+            let c = 1;
             document.querySelector("#abrir").addEventListener('click', function(){
-                dgtToast.showMessage("info", "CONTEUDO asdfadsf asdfadf");
+                dgtToast.showMessage("info", "CONTEUDO asdfadsf asdfadf " + c);
+                c++;
             });
 
             let paragraph =document.createElement("p");
