@@ -3,21 +3,21 @@
     (function(window) {
         const DGT_ELEMENTS_TEMPLATES = new Map();
 
-        function getAttributeName(value) {
+        function toAttributeName(value) {
             return value.split(/(?=[A-Z])/).join('-').toLowerCase();
         }
 
+        function fromAttributeName(value) {
+            return value.replace(/-(\w)/g, function($0, $1) { return $1.toUpperCase(); });
+        }
+
         function setupProperties(instance, properties) {
+            let hasToCreateMutationObserver = false;
             for (const prop of properties) {
                 // console.log('setup prop', prop);
                 const propMap = new WeakMap();
                 const key = {name: prop.attribute};
-                const attrName = getAttributeName(prop.attribute);
-
-                if (prop.reflectToAttribute) {
-                    const mutObserver = new MutationObserver(instance.mutationObserverCallback.bind(instance));
-                    mutObserver.observe(instance, {attributes: true});
-                }
+                const attrName = toAttributeName(prop.attribute);
 
                 Object.defineProperty(instance, prop.attribute, {
                     get: function() {
@@ -27,7 +27,7 @@
                         const oldValue = propMap.get(key);
                         propMap.set(key, newValue);
 
-                        if (prop.reflectToAttribute) {
+                        if (prop.reflectToAttribute && !this.__mutationChange) {
                             if (newValue !== null && newValue !== undefined) {
                                 this.setAttribute(attrName, newValue);
                             } else {
@@ -52,6 +52,15 @@
                 if (prop.reflectToAttribute && initialValue) {
                     instance.setAttribute(attrName, initialValue);
                 }
+
+                if (prop.reflectToAttribute) {
+                    hasToCreateMutationObserver = true;
+                }
+            }
+
+            if (hasToCreateMutationObserver) {
+                const mutObserver = new MutationObserver(instance.mutationObserverCallback.bind(instance));
+                mutObserver.observe(instance, {attributes: true});
             }
         }
 
@@ -59,11 +68,11 @@
             constructor() {
                 super();
                 this.template = DGT_ELEMENTS_TEMPLATES.get(this.tagName);
-                const shady = this.attachShadow({mode: 'closed'});
+                this.$ = this.attachShadow({mode: 'closed'});
                 const instance = this.template.content.cloneNode(true);
-                shady.appendChild(instance);
+                this.$.appendChild(instance);
                 if (this.constructor.properties) {
-                    setupProperties(this, this.constructor.properties);
+                    setupProperties(this, this.constructor.properties(this));
                 }
             }
 
@@ -73,10 +82,13 @@
 
             mutationObserverCallback(mutations) {
                 for (let mutation of mutations) {
-                    let target = mutation.target;
-                    let newValue = target.getAttribute(mutation.attributeName);
-                    if (this.disabled !== newValue) {
-                        this.disabled = newValue;
+                    const target = mutation.target;
+                    const newValue = target.getAttribute(mutation.attributeName);
+                    const propName = fromAttributeName(mutation.attributeName);
+                    if (this.hasOwnProperty(propName)) {
+                        this.__mutationChange = true;
+                        this[propName] = newValue;
+                        delete this.__mutationChange;
                     }
                 }
             }

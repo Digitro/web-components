@@ -162,7 +162,7 @@
             expect(observers.attrNoReflectWithObserver.calledWith('new value', 'value attrNoReflectWithObserver')).to.be.true;
         });
 
-        test('<dgt-element> property with reflectToAttribute and without observer', function () {
+        test('<dgt-element> property with reflectToAttribute and without observer', function (done) {
             assert.isTrue(element.hasAttribute('attr-reflect-no-observer'));
             assert.equal(element.getAttribute('attr-reflect-no-observer'), 'value attrReflectNoObserver');
             assert.equal(element.attrReflectNoObserver, 'value attrReflectNoObserver');
@@ -171,6 +171,14 @@
 
             assert.equal(element.attrReflectNoObserver, 'new value');
             assert.equal(element.getAttribute('attr-reflect-no-observer'), 'new value');
+
+            element.setAttribute('attr-reflect-no-observer', 'another value');
+
+            setTimeout(function (){
+                assert.equal(element.attrReflectNoObserver, 'another value');
+                assert.equal(element.getAttribute('attr-reflect-no-observer'), 'another value');
+                done();
+            }, 10);// allow mutations to happen
         });
 
         test('<dgt-element> property with reflectToAttribute and with observer', function () {

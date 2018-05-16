@@ -11,8 +11,8 @@
         static configProperties(properties) {
             DGTTestElement.__properties = properties;
         }
-        static get properties() {
-            return DGTTestElement.__properties;
+        static properties(/*instance*/) {
+            return DGTTestElement.__properties || [];
         }
 
         constructor() {
