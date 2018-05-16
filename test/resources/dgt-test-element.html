@@ -5,10 +5,18 @@
 </template>
 
 <script>
+
     class DGTTestElement extends DGTElement {
+
+        static configProperties(properties) {
+            DGTTestElement.__properties = properties;
+        }
+        static get properties() {
+            return DGTTestElement.__properties;
+        }
+
         constructor() {
             super();
-
         }
     }
     DGTElement.registerElement('dgt-test-element', DGTTestElement);

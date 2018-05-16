@@ -76,8 +76,7 @@
         };
 
         setup(function() {
-            element = fixture('dgt-element-fixture');
-            element.properties = [
+            DGTTestElement.configProperties([
                 {
                     attribute: 'attrNoValueDefined',
                     reflectToAttribute: true
@@ -116,7 +115,9 @@
                     value: 'value attrRemoveWithReflect',
                     reflectToAttribute: true
                 }
-            ];
+            ]);
+
+            element = fixture('dgt-element-fixture');
 
             element.addEventListener('changedAttrGlobal', observers.globalObserver);
         });
@@ -127,94 +128,101 @@
         });
 
         test('<dgt-element> property without value defined', function () {
-            assert.isFalse(element.hasAttribute('attrNoValueDefined'));
-            assert.isNull(element.getAttribute('attrNoValueDefined'));
-            assert.isNull(element.attrNoValueDefined.value);
+            assert.isFalse(element.hasAttribute('attr-no-value-defined'));
+            assert.isNull(element.getAttribute('attr-no-value-defined'));
+            assert.isNull(element.attrNoValueDefined);
 
-            element.attrNoValueDefined.value = 'new value';
+            element.attrNoValueDefined = 'new value';
 
-            assert.equal(element.attrNoValueDefined.value, 'new value');
-            assert.equal(element.getAttribute('attrNoValueDefined'), 'new value');
+            assert.equal(element.attrNoValueDefined, 'new value');
+            assert.equal(element.getAttribute('attr-no-value-defined'), 'new value');
         });
 
         test('<dgt-element> property without reflectToAttribute and without observer', function () {
-            assert.isTrue(element.hasAttribute('attrNoReflectNoObserver'));
-            assert.equal(element.getAttribute('attrNoReflectNoObserver'), 'value attrNoReflectNoObserver');
-            assert.equal(element.attrNoReflectNoObserver.value, 'value attrNoReflectNoObserver');
+            assert.isFalse(element.hasAttribute('attr-no-reflect-no-observer'));
+            assert.equal(element.getAttribute('attr-no-reflect-no-observer'), null);
+            assert.equal(element.attrNoReflectNoObserver, 'value attrNoReflectNoObserver');
 
-            element.attrNoReflectNoObserver.value = 'new value';
+            element.attrNoReflectNoObserver = 'new value';
 
-            assert.equal(element.attrNoReflectNoObserver.value, 'new value');
-            assert.equal(element.getAttribute('attrNoReflectNoObserver'), 'value attrNoReflectNoObserver');
+            assert.equal(element.attrNoReflectNoObserver, 'new value');
+            assert.equal(element.getAttribute('attr-no-reflect-no-observer'), null);
         });
 
         test('<dgt-element> property without reflectToAttribute and with observer', function () {
-            assert.isTrue(element.hasAttribute('attrNoReflectWithObserver'));
-            assert.equal(element.getAttribute('attrNoReflectWithObserver'), 'value attrNoReflectWithObserver');
-            assert.equal(element.attrNoReflectWithObserver.value, 'value attrNoReflectWithObserver');
+            assert.isFalse(element.hasAttribute('attr-no-reflect-with-observer'));
+            assert.equal(element.getAttribute('attr-no-reflect-with-observer'), null);
+            assert.equal(element.attrNoReflectWithObserver, 'value attrNoReflectWithObserver');
 
-            element.attrNoReflectWithObserver.value = 'new value';
+            element.attrNoReflectWithObserver = 'new value';
 
-            assert.equal(element.attrNoReflectWithObserver.value, 'new value');
-            assert.equal(element.getAttribute('attrNoReflectWithObserver'), 'value attrNoReflectWithObserver');
+            assert.equal(element.attrNoReflectWithObserver, 'new value');
+            assert.equal(element.getAttribute('attr-no-reflect-with-observer'), null);
             expect(observers.attrNoReflectWithObserver.calledOnce).to.be.true;
+            expect(observers.attrNoReflectWithObserver.calledWith('new value', 'value attrNoReflectWithObserver')).to.be.true;
         });
 
         test('<dgt-element> property with reflectToAttribute and without observer', function () {
-            assert.isTrue(element.hasAttribute('attrReflectNoObserver'));
-            assert.equal(element.getAttribute('attrReflectNoObserver'), 'value attrReflectNoObserver');
-            assert.equal(element.attrReflectNoObserver.value, 'value attrReflectNoObserver');
+            assert.isTrue(element.hasAttribute('attr-reflect-no-observer'));
+            assert.equal(element.getAttribute('attr-reflect-no-observer'), 'value attrReflectNoObserver');
+            assert.equal(element.attrReflectNoObserver, 'value attrReflectNoObserver');
 
-            element.attrReflectNoObserver.value = 'new value';
+            element.attrReflectNoObserver = 'new value';
 
-            assert.equal(element.attrReflectNoObserver.value, 'new value');
-            assert.equal(element.getAttribute('attrReflectNoObserver'), 'new value');
+            assert.equal(element.attrReflectNoObserver, 'new value');
+            assert.equal(element.getAttribute('attr-reflect-no-observer'), 'new value');
         });
 
         test('<dgt-element> property with reflectToAttribute and with observer', function () {
-            assert.isTrue(element.hasAttribute('attrReflectWithObserver'));
-            assert.equal(element.getAttribute('attrReflectWithObserver'), 'value attrReflectWithObserver');
-            assert.equal(element.attrReflectWithObserver.value, 'value attrReflectWithObserver');
+            assert.isTrue(element.hasAttribute('attr-reflect-with-observer'));
+            assert.equal(element.getAttribute('attr-reflect-with-observer'), 'value attrReflectWithObserver');
+            assert.equal(element.attrReflectWithObserver, 'value attrReflectWithObserver');
 
-            element.attrReflectWithObserver.value = 'new value';
+            element.attrReflectWithObserver = 'new value';
 
-            assert.equal(element.attrReflectWithObserver.value, 'new value');
-            assert.equal(element.getAttribute('attrReflectWithObserver'), 'new value');
+            assert.equal(element.attrReflectWithObserver, 'new value');
+            assert.equal(element.getAttribute('attr-reflect-with-observer'), 'new value');
             expect(observers.attrReflectWithObserver.calledOnce).to.be.true;
+            expect(observers.attrReflectWithObserver.calledWith('new value', 'value attrReflectWithObserver')).to.be.true;
         });
 
         test('<dgt-element> remove property without reflectToAttribute', function () {
-            assert.isTrue(element.hasAttribute('attrRemoveNoReflect'));
-            assert.equal(element.getAttribute('attrRemoveNoReflect'), 'value attrRemoveNoReflect');
-            assert.equal(element.attrRemoveNoReflect.value, 'value attrRemoveNoReflect');
+            assert.isFalse(element.hasAttribute('attr-remove-no-reflect'));
+            assert.equal(element.getAttribute('attr-remove-no-reflect'), null);
+            assert.equal(element.attrRemoveNoReflect, 'value attrRemoveNoReflect');
 
-            element.attrRemoveNoReflect.value = null;
+            element.attrRemoveNoReflect = null;
 
-            assert.isNull(element.attrRemoveNoReflect.value);
-            assert.equal(element.getAttribute('attrRemoveNoReflect'), 'value attrRemoveNoReflect');
+            assert.isNull(element.attrRemoveNoReflect);
+            assert.equal(element.getAttribute('attr-remove-no-reflect'), null);
         });
 
         test('<dgt-element> remove property with reflectToAttribute', function () {
-            assert.isTrue(element.hasAttribute('attrRemoveWithReflect'));
-            assert.equal(element.getAttribute('attrRemoveWithReflect'), 'value attrRemoveWithReflect');
-            assert.equal(element.attrRemoveWithReflect.value, 'value attrRemoveWithReflect');
+            assert.isTrue(element.hasAttribute('attr-remove-with-reflect'));
+            assert.equal(element.getAttribute('attr-remove-with-reflect'), 'value attrRemoveWithReflect');
+            assert.equal(element.attrRemoveWithReflect, 'value attrRemoveWithReflect');
 
-            element.attrRemoveWithReflect.value = null;
+            element.attrRemoveWithReflect = null;
 
-            assert.isNull(element.attrRemoveWithReflect.value);
-            assert.isNull(element.getAttribute('attrRemoveWithReflect'));
+            assert.isNull(element.attrRemoveWithReflect);
+            assert.isNull(element.getAttribute('attr-remove-with-reflect'));
         });
 
         test('<dgt-element> global property', function () {
-            assert.isTrue(element.hasAttribute('attrGlobal'));
-            assert.equal(element.getAttribute('attrGlobal'), 'value global');
-            assert.equal(element.attrGlobal.value, 'value global');
+            assert.isFalse(element.hasAttribute('attr-global'));
+            assert.equal(element.getAttribute('attr-global'), null);
+            assert.equal(element.attrGlobal, 'value global');
 
-            element.attrGlobal.value = 'new value';
+            element.attrGlobal = 'new value';
 
-            assert.equal(element.attrGlobal.value, 'new value');
-            assert.equal(element.getAttribute('attrGlobal'), 'value global');
+            assert.equal(element.attrGlobal, 'new value');
+            assert.equal(element.getAttribute('attr-global'), null);
             expect(observers.globalObserver.calledOnce).to.be.true;
+            const evt = observers.globalObserver.getCall(0).args[0];
+            expect(evt.detail).to.be.deep.equal({
+                newValue: 'new value',
+                oldValue: 'value global'
+            });
         });
     });
 
