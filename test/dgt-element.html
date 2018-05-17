@@ -18,6 +18,13 @@
     </template>
 </test-fixture>
 
+<test-fixture id="dgt-element-attr-fixture">
+    <template>
+        <dgt-test-element attr-dom-no-value="dom value" attr-dom="dom value">
+        </dgt-test-element>
+    </template>
+</test-fixture>
+
 <test-fixture id="empty-fixture">
     <template>
         <div></div>
@@ -231,6 +238,43 @@
                 newValue: 'new value',
                 oldValue: 'value global'
             });
+        });
+    });
+
+    suite('<dgt-element> properties initialized in dom', function() {
+        let element;
+
+        setup(function() {
+            DGTTestElement.configProperties([
+                {
+                    attribute: 'attrDomNoValue',
+                    reflectToAttribute: true
+                },
+                {
+                    attribute: 'attrDom',
+                    reflectToAttribute: true,
+                    value: 'value attrDom'
+                }
+            ]);
+
+            element = fixture('dgt-element-attr-fixture');
+        });
+
+        test('<dgt-element> created', function () {
+            assert.isNotNull(element);
+            assert.isNotNull(element.offsetParent);
+        });
+
+        test('<dgt-element> property initialized in dom with no value defined in property', function () {
+            assert.isTrue(element.hasAttribute('attr-dom-no-value'));
+            assert.equal(element.getAttribute('attr-dom-no-value'), 'dom value');
+            assert.equal(element.attrDomNoValue, 'dom value');
+        });
+
+        test('<dgt-element> property initialized in dom with another value defined in property', function () {
+            assert.isTrue(element.hasAttribute('attr-dom'));
+            assert.equal(element.getAttribute('attr-dom'), 'dom value');
+            assert.equal(element.attrDom, 'dom value');
         });
     });
 

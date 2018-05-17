@@ -46,12 +46,16 @@
                         }
                     }
                 });
-                const initialValue = prop.value === undefined ? null : prop.value;
+                let initialValue = prop.value === undefined ? null : prop.value;
 
-                propMap.set(key, initialValue);
-                if (prop.reflectToAttribute && initialValue) {
-                    instance.setAttribute(attrName, initialValue);
+                if (prop.reflectToAttribute) {
+                    if (instance.hasAttribute(attrName)) {
+                        initialValue = instance.getAttribute(attrName);
+                    } else if (initialValue !== null) {
+                        instance.setAttribute(attrName, initialValue);
+                    }
                 }
+                propMap.set(key, initialValue);
 
                 if (prop.reflectToAttribute) {
                     hasToCreateMutationObserver = true;
