@@ -1,0 +1,28 @@
+<link rel="import" href="../dgt-element/dgt-element.html">
+<link rel="import" href="dgt-gridrow.html">
+<template>
+    <style>
+        dgt-gridrows{
+            display: table-row-group;
+        }
+        :host{
+            display: table-row-group;
+        }
+
+    </style>
+    <div class="fake-scroll-top"></div>
+    <slot></slot>
+    <div class="fake-scroll-bottom"></div>
+
+</template>
+<script>
+    class DGTGridRows extends DGTElement {
+        constructor(){
+            super();
+        }
+        connectedCallback(){
+
+        }
+    }
+    DGTElement.registerElement('dgt-gridrows', DGTGridRows);
+</script>

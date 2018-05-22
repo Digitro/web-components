@@ -1,0 +1,170 @@
+<link rel="import" href="../dgt-element/dgt-element.html">
+<link rel="import" href="dgt-gridcell.html">
+<template>
+    <style>
+        dgt-gridrow {
+            display: table-row;
+        }
+
+        :host {
+            display: table-row;
+        }
+
+    </style>
+
+    <slot></slot>
+</template>
+<script>
+    class DGTGridRow extends DGTElement {
+        constructor(index, userObject, columns, selectOnClick) {
+            super();
+            this.index = index;
+            this.columns = columns;
+            this.userObject = userObject;
+            this._value = userObject;
+            this._columns = columns;
+            this.selectOnClick = selectOnClick;
+        }
+
+        static properties(instance) {
+            return [
+                {
+                    attribute: 'index'
+                },
+                {
+                    attribute: 'selected',
+                    reflectToAttribute: true
+                },
+                {
+                    attribute: 'disabled',
+                    reflectToAttribute: true,
+                    observer: instance._toggleDisabled.bind(this)
+
+                }
+            ];
+        }
+
+        connectedCallback() {
+            this._render();
+        }
+
+        handleDblClick(dblClickEvent){
+            let eventObject = {
+                index: this.index,
+                value: this._value,
+                dblClickEvent: dblClickEvent
+            };
+            this.fire('dblClickRow', eventObject);
+        }
+
+        handleClick(clickEvent){
+            let eventObject = {
+                index: this.index,
+                value: this._value,
+                clickEvent: clickEvent
+            };
+            this.fire('clickRow', eventObject);
+
+            if(this.selectOnClick){
+                if (this.hasAttributes('selected')) {
+                    this.deselect(clickEvent);
+                } else {
+                    this.select(clickEvent);
+                }
+            }
+        }
+
+        select(clickEvent, omitEvent){
+            if(!this.selected){
+                this.selected = '';
+
+                let eventObject = {
+                    index: this.index,
+                    value: this._value,
+                    clickEvent: clickEvent
+                };
+                let checkbox = this.querySelector('.checkbox');
+                if(this._columns && checkbox){
+                    checkbox.setAttribute('checked', '');
+                }
+                if(!omitEvent){
+                    this.fire('selectRow', eventObject);
+                }
+            }
+        }
+
+        deselect(clickEvent, omitEvent){
+            if(this.selected !== undefined){
+                this.selected = null;
+                let eventObject = {
+                    index: this.index,
+                    value: this._value,
+                    clickEvent: clickEvent
+                };
+                let checkbox = this.querySelector('.checkbox');
+                if(this._columns && checkbox){
+                    checkbox.removeAttribute('checked');
+                }
+                if(!omitEvent){
+                    this.fire('deselectRow', eventObject);
+                }
+            }
+        }
+
+        get value(){
+            return this._value;
+        }
+
+        set value(userObject){
+            let parent = this;
+            while(parent.firstChild){
+                parent.removeChild(parent.firstChild);
+            }
+            this._render(userObject, this._columns);
+            this._value = userObject;
+        }
+
+        _toggleDisabled() {
+            if(this._columns && this._columns.checkbox){
+                let checkbox = this.children[0].children[0];
+                if(!this.disabled) {
+                    checkbox.removeAttribute("disabled");
+                }else {
+                    checkbox.setAttribute("disabled", '');
+                }
+                this.fire('disabledRow', {
+                    index: this.index,
+                    value: this._value
+                });
+            }
+        }
+
+        _render(){
+            if (this.__validRender) return;
+            for (let property in this.columns){
+
+                let column = this.columns[property];
+                let cell = new DGTGridCell();
+
+                if(column.hidden){
+                    cell.style.display = 'none';
+                }
+                if(column.cellClass){
+                    cell.className = column.cellClass;
+                }
+                if (column.renderer){
+                    column.renderer(cell, this.userObject, this);
+                } else {
+                    let content = DGTElement.getJsonValue(this.userObject, column.name);
+                    if (content !== 'undefined' && content !== null)
+                        cell.innerHTML = content;
+                }
+                this.appendChild(cell);
+            }
+
+            this.__validRender = true;
+        }
+    }
+
+    DGTElement.registerElement('dgt-gridrow', DGTGridRow);
+</script>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DGT Livegrid</title>
+    <script src="../../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <link rel="import" href="dgt-livegrid.html">
+
+    <style>
+        dgt-livegrid{
+            --dgt-livegrid-height: 200px;
+        }
+        dgt-gridcolumn{
+            font-weight: bold;
+            background: #f1f1f1;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        dgt-gridrow:nth-child(even){
+            background: #f9f9f9;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        dgt-gridrow[selected]{
+            background: #ccc;
+        }
+        dgt-gridrow[disabled]{
+            pointer-events: none;
+            opacity: .5;
+        }
+        dgt-gridcell{
+            padding: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+        }
+    </style>
+
+
+</head>
+<body>
+
+<script>
+    var database = [];
+    // populate database
+    for (var i = 0; i < 5000; i++){
+        database.push({
+            index: i+1,
+            timestamp: Date.now() * Math.random(),
+            seed: {
+                first: Math.floor((Math.random()) * 32768 * 32768) + 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+                second: Math.floor(-(Math.random()) * 32768 * 32768),
+            },
+            page: Math.floor(i/33),
+        });
+    }
+    var timestampRenderer = function(element, userObject){
+        var timestamp = userObject.timestamp;
+        if (timestamp){
+            function pad(s) { return (s < 10) ? '0' + s : s; }
+            var d = new Date(timestamp);
+            element.innerHTML = pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + pad(d.getFullYear()) +
+                ' <span style="color: red;">' + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds()) +
+                "</span>";
+        }
+    };
+    document.addEventListener('WebComponentsReady', function(){
+        console.log('todos os componentes estão prontos!!!');
+    });
+</script>
+
+  <dgt-livegrid id="grid-1">
+      <dgt-gridcolumns slot="dgt-gridcolumns">
+          <dgt-gridcolumn hideable name="frequency" style="width: 20%" title="Frequency">Frequency(MHz)</dgt-gridcolumn>
+          <dgt-gridcolumn hidden hideable name="board" style="width: 30%">Board</dgt-gridcolumn>
+          <dgt-gridcolumn name="duration" style="width: 10%">Duration(s)</dgt-gridcolumn>
+          <dgt-gridcolumn name="notes" style="width: 40%">Notes</dgt-gridcolumn>
+      </dgt-gridcolumns>
+      <dgt-gridrows slot="dgt-gridrows">
+          <dgt-gridrow>
+              <dgt-gridcell>462.684</dgt-gridcell>
+              <dgt-gridcell>0</dgt-gridcell>
+              <dgt-gridcell>5.1</dgt-gridcell>
+              <dgt-gridcell>Áudio estranho!</dgt-gridcell>
+          </dgt-gridrow>
+          <dgt-gridrow>
+              <dgt-gridcell>463.551</dgt-gridcell>
+              <dgt-gridcell>0</dgt-gridcell>
+              <dgt-gridcell>6.1</dgt-gridcell>
+              <dgt-gridcell>Tráfico de drogas..</dgt-gridcell>
+          </dgt-gridrow>
+          <dgt-gridrow>
+              <dgt-gridcell>459.288</dgt-gridcell>
+              <dgt-gridcell>1</dgt-gridcell>
+              <dgt-gridcell>13.7</dgt-gridcell>
+              <dgt-gridcell>SAMU</dgt-gridcell>
+          </dgt-gridrow>
+      </dgt-gridrows>
+  </dgt-livegrid>
+
+
+    <dgt-livegrid id="livegrid-1" selectable>
+        <div slot="dgt-gridheader">
+            <button id="append-btn-1">Append data</button>
+            <button id="clear-btn-1">Clear data</button>
+        </div>
+        <dgt-gridcolumns slot="dgt-gridcolumns">
+            <dgt-gridcolumn name="index" style="width:10%">Index</dgt-gridcolumn>
+            <dgt-gridcolumn name="timestamp">Date</dgt-gridcolumn>
+            <dgt-gridcolumn name="seed" style="width:30%">Seed Value</dgt-gridcolumn>
+            <dgt-gridcolumn name="actions" style="width:10%">Actions</dgt-gridcolumn>
+        </dgt-gridcolumns>
+    </dgt-livegrid>
+
+
+
+    <script>
+        document.addEventListener('WebComponentsReady', function() {
+            var posCounter = 0;
+            var negCounter = 0;
+            var grid1 = document.querySelector("#livegrid-1");
+
+            grid1.columns["timestamp"].setRenderer(timestampRenderer);
+
+            var appendBtn = document.querySelector("#append-btn-1");
+            appendBtn.addEventListener('click', function(){
+                var data = {
+                    index: posCounter++,
+                    timestamp: Date.now(),
+                    seed: Math.floor((Math.random() - 0.5) * 32768 * 32768),
+                };
+                if (negCounter == 0) negCounter--;
+                grid1.addValues(data);
+            });
+
+            var clearBtn = document.querySelector("#clear-btn-1");
+            clearBtn.addEventListener('click', function(){
+                posCounter = negCounter = 0;
+                grid1.clear();
+            });
+
+            var actionsRenderer = function(element, userObject){
+
+                var btn = document.createElement('button');
+                btn.innerHTML = "Delete";
+                btn.setAttribute('click-event', 'removeDataSample');
+                element.innerHTML = '';
+                element.appendChild(btn);
+            };
+            grid1.columns["actions"].setRenderer(actionsRenderer);
+
+            grid1.addEventListener('removeDataSample', function(e){
+                var row = e.detail.row;
+                grid1.removeValues(row.index);
+            });
+        });
+    </script>
+
+
+ <dgt-livegrid id="grid-2" selectable="multiple"></dgt-livegrid>
+
+  <script>
+      document.addEventListener('WebComponentsReady', function() {
+          let grid = document.querySelector("#grid-2");
+          grid.columns = [
+              {
+                  label:  "Index",
+                  name:  "index",
+                  resizable: true,
+                  hideable: true,
+                  draggable: true
+              },{
+                  label:  "Page",
+                  name:  "page",
+                  searchBar: true,
+                  resizable: true,
+                  hideable: true,
+                  draggable: true
+              },{
+                  label:  "Date",
+                  name:  "timestamp",
+                  sortable: "ASC",
+                  resizable: true,
+                  hideable: true,
+                  draggable: true
+              },{
+                  label:  "First Seed",
+                  name:  "seed.first",
+                  resizable: true,
+                  hideable: true,
+                  draggable: true
+              },{
+                  label:  "Second Seed",
+                  name:  "seed.second",
+                  searchBar: true,
+                  resizable: true,
+                  hideable: true,
+                  draggable: true
+              }];
+
+
+          grid.setGridLoadProxy(function(gridRequest, successCallback, errorCallback){
+
+              var clone = database.slice(0);
+
+              var filter = gridRequest.filter[0];
+              if (filter && filter.column == "page"){
+                  var cloneFiltered = clone.filter( function(value){
+                      return (value.page == filter.value);
+                  });
+                  clone = cloneFiltered;
+              }
+
+              /*var sortOrder = gridRequest.sortOrder[0];
+              if (sortOrder && sortOrder.column == "timestamp"){
+                  if (sortOrder.direction == "asc")
+                      clone.sort(function(a, b){ return (a.timestamp - b.timestamp); });
+                  else if (sortOrder.direction == "desc")
+                      clone.sort(function(a, b){ return (b.timestamp - a.timestamp); });
+              }*/
+
+              var index = gridRequest.index;
+              var numElements = gridRequest.count;
+              var elements = [];
+              for (var i = 0; i < numElements; i++){
+                  if (index + i >= clone.length) break;
+                  elements.push(clone[index + i]);
+              }
+              setTimeout( function(){ successCallback(elements);}, 1000);
+          });
+
+          grid.columns["timestamp"].setRenderer(timestampRenderer);
+
+          grid.load();
+
+      });
+  </script>
+
+
+<h3 class="mar-bot">
+    Exemplos dgt-livegrid com linhas desativadas e duplo clique na linha para selecionar
+    ou deselecionar
+</h3>
+
+    <dgt-livegrid id="livegrid-7" selectable="multiple">
+
+        <div slot="dgt-gridheader">
+            <button id="disable-selected-rows">Disable selected rows</button>
+            <button id="enable-rows">Enable rows</button>
+            <span id="count-div7"></span>  &nbsp;registros
+        </div>
+
+        <dgt-gridcolumns slot="dgt-gridcolumns">
+            <dgt-gridcolumn name="index" style="width:100px">Index</dgt-gridcolumn>
+            <dgt-gridcolumn name="page" style="width:100px">Page</dgt-gridcolumn>
+            <dgt-gridcolumn name="timestamp">Date</dgt-gridcolumn>
+            <dgt-gridcolumn name="seed.first">First Seed</dgt-gridcolumn>
+            <dgt-gridcolumn name="actions" style="width:100px">Actions</dgt-gridcolumn>
+        </dgt-gridcolumns>
+    </dgt-livegrid>
+
+
+    <script>
+        document.addEventListener('WebComponentsReady', function(){
+            var grid7 = document.querySelector("#livegrid-7");
+
+            grid7.columns["timestamp"].setRenderer(timestampRenderer);
+
+            var disabledSelectedRows = document.getElementById("disable-selected-rows");
+            disabledSelectedRows.addEventListener('click', function(){
+                var selectedRows = grid7.selectedRows;
+                for(var i=0; i<selectedRows.length;i++){
+                    selectedRows[i].deselect();
+                    selectedRows[i].setAttribute("disabled", '');
+                    //or use like this:  selectedRows[i].disabled = true;
+                }
+            });
+
+            var enableRows = document.getElementById("enable-rows");
+            enableRows.addEventListener('click', function(){
+                var rows = grid7.rows;
+                for(var i=0; i<rows.length;i++){
+                    rows[i].removeAttribute("disabled");
+                    //or use like this:  rows[i].disabled = false;
+                }
+            });
+
+            var countDiv = document.getElementById('count-div7');
+
+            grid7.setGridLoadProxy(function(gridRequest, successCallback, errorCallback){
+                var clone = database.slice(0);
+
+                var index = gridRequest.index;
+                var numElements = gridRequest.count;
+                var elements = [];
+                for (var i = 0; i < numElements; i++){
+                    if (index + i >= clone.length) break;
+                    elements.push(clone[index + i]);
+                }
+                setTimeout( function(){ successCallback(elements, clone.length);}, 1000);
+            });
+
+            grid7.addEventListener('gridInfo', function(e){
+                var pageInfo = e.detail;
+                var visibleRows = pageInfo.visibleRows;
+                countDiv.innerText = 'Registros ' + visibleRows[0] + '-' + visibleRows[1] + ' de - ' + pageInfo.count;
+            });
+
+            var actionsRenderer = function(element, userObject){
+                var btnIcon = document.createElement('i');
+                btnIcon.classList.add('mdi');
+                btnIcon.classList.add('mdi-delete');
+
+                var btn = document.createElement('button');
+                btn.classList.add('btn-icn');
+                btn.appendChild(btnIcon);
+                btn.setAttribute('click-event', 'removeDataSample');
+                btn.innerHTML = "Delete";
+
+                element.innerHTML = '';
+                element.appendChild(btn);
+            };
+            grid7.columns["actions"].setRenderer(actionsRenderer);
+
+            grid7.addEventListener('removeDataSample', function(e){
+                console.log('removeDataSample');
+                var clickEvent = e.detail.clickEvent;
+                clickEvent.cancelBubble = true;
+                var row = e.detail.row;
+                grid7.removeValues(row.index);
+            });
+
+            grid7.addEventListener('disabledRow', function(){
+                console.log("disabledRow");
+            });
+
+            grid7.addEventListener('dblClickRow', function(e){
+                if(!e.target.hasAttribute('selected')) {
+                    e.target.select();
+                    return;
+                }
+                e.target.deselect();
+            });
+
+            grid7.load();
+        });
+    </script>
+
+
+
+</body>
+</html>

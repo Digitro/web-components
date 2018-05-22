@@ -1,0 +1,52 @@
+<link rel="import" href="../dgt-element/dgt-element.html">
+<template>
+    <style>
+        dgt-gridcell{
+            display: table-cell;
+        }
+        :host{
+            display: table-cell;
+        }
+
+
+        ::slotted(.checkbox){
+            display: inline-block;
+        }
+
+        ::slotted(.checkbox):before {
+            border: 1px solid #000;
+            width: 14px;
+            height: 14px;
+            display: inline-block;
+            content: '';
+            color: #000;
+        }
+
+        ::slotted(.checkbox[checked]):before {
+            content: "\2713";
+        }
+
+
+    </style>
+
+    <slot name="checkbox"></slot>
+
+    <slot></slot>
+
+</template>
+<script>
+    class DGTGridCell extends DGTElement {
+        constructor(){
+            super();
+        }
+        connectedCallback(){
+            let checkbox = this.querySelector('[slot=checkbox]');
+            if(checkbox && this.parentElement.hasAttribute('selected')){
+                checkbox.setAttribute('checked', '');
+            }else if(checkbox){
+                checkbox.removeAttribute('checked');
+            }
+        }
+    }
+    DGTElement.registerElement('dgt-gridcell', DGTGridCell);
+</script>

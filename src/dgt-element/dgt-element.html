@@ -13,6 +13,7 @@
 
         function setupProperties(instance, properties) {
             let hasToCreateMutationObserver = false;
+            let attribValuesToSet = [];
             for (const prop of properties) {
                 // console.log('setup prop', prop);
                 const propMap = new WeakMap();
@@ -52,7 +53,7 @@
                     if (instance.hasAttribute(attrName)) {
                         initialValue = instance.getAttribute(attrName);
                     } else if (initialValue !== null) {
-                        instance.setAttribute(attrName, initialValue);
+                        attribValuesToSet.push({name: attrName, value: initialValue});
                     }
                 }
                 propMap.set(key, initialValue);
@@ -66,18 +67,31 @@
                 const mutObserver = new MutationObserver(instance.mutationObserverCallback.bind(instance));
                 mutObserver.observe(instance, {attributes: true});
             }
+            instance.__initialValues = attribValuesToSet;
         }
 
         class DGTElement extends HTMLElement {
             constructor() {
                 super();
                 this.template = DGT_ELEMENTS_TEMPLATES.get(this.tagName);
-                this.$ = this.attachShadow({mode: 'closed'});
+                this.$ = this;
+                if (!window.ShadyDOM) {
+                    this.$ = this.attachShadow({mode: 'closed'});
+                }
                 const instance = this.template.content.cloneNode(true);
                 this.$.appendChild(instance);
                 if (this.constructor.properties) {
                     setupProperties(this, this.constructor.properties(this));
                 }
+            }
+
+            connectedCallback() {
+                if (this.__initialValues && this.__initialValues.length > 0) {
+                    for (const attr of this.__initialValues) {
+                        this.setAttribute(attr.name, attr.value);
+                    }
+                }
+                delete this.__initialValues;
             }
 
             __capitalize(str) {
@@ -99,6 +113,8 @@
 
             fire(eventName, data){
                 this.dispatchEvent(new CustomEvent(eventName, {
+                    bubbles: true,
+                    cancelable: true,
                     detail: data
                 }));
             }
@@ -119,6 +135,20 @@
                 /* eslint-disable no-console */
                 console.error.apply(null, arguments);
                 /* eslint-enable no-console */
+            }
+            static getJsonValue(jsonObject, jsonAttrib) {
+                if (jsonAttrib.indexOf('.') != -1) {
+                    var newAttribs = jsonAttrib.split('.');
+                    for(var i=0; i<newAttribs.length; i++){
+                        jsonObject = jsonObject[newAttribs[i]];
+                        if(jsonObject == null){
+                            return undefined;
+                        }
+                    }
+                    return jsonObject;
+                } else {
+                    return jsonObject[jsonAttrib];
+                }
             }
         }
 

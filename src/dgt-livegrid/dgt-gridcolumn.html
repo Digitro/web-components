@@ -1,0 +1,318 @@
+<link rel="import" href="../dgt-element/dgt-element.html">
+<template>
+    <style>
+        dgt-gridcolumn {
+            display: table-cell;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        dgt-gridcolumn[hidden=true] {
+            display: none;
+        }
+
+        dgt-gridcolumn .checkbox {
+            border: 1px solid #000;
+            padding: 5px;
+        }
+
+        :host {
+            display: table-cell;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        :host([hidden=true]) {
+            display: none;
+        }
+
+        :host .checkbox {
+            display: none;
+        }
+
+        :host([is-checkbox]) .checkbox{
+            display: inline-block;
+        }
+
+        :host .checkbox:before {
+            border: 1px solid #000;
+            width: 14px;
+            height: 14px;
+            display: inline-block;
+            content: '';
+            color: #000;
+        }
+
+        :host .checkbox[checked]:before {
+            content: "-";
+        }
+
+        :host .checkbox[all-checked]:before {
+            content: "\2713";
+        }
+
+        :host .resizable-area{
+            display: none;
+        }
+
+        :host([resizable=true]) .resizable-area{
+            display: block;
+        }
+
+        :host(:hover) .resizable-area,
+        :host(:active) .resizable-area{
+            cursor: col-resize;
+            width: 5px;
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background: #92d0ff;
+        }
+
+
+    </style>
+
+    <span class="checkbox" tabindex="0" slot="checkbox"></span>
+
+    <span class="label">
+        <slot></slot>
+    </span>
+    <div class="resizable-area"></div>
+
+</template>
+<script>
+    class DGTGridColumn extends DGTElement {
+        constructor(column) {
+            super();
+            if (!column) {
+                return;
+            }
+            this.name = column.name || null;
+            this.sortable = column.sortable || null;
+            this.searchBar = column.searchBar || null;
+            this.isCheckbox = column.isCheckbox || null;
+            this.resizable = column.resizable || null;
+            this.hideable = column.hideable || null;
+            this.hidden = column.hidden || null;
+            this.draggable = column.draggable || null;
+        }
+
+        static properties() {
+            return [
+                {
+                    attribute: 'name',
+                    reflectToAttribute: true
+                },
+                {
+                    attribute: 'sortable',
+                    reflectToAttribute: true
+                },
+                {
+                    attribute: 'searchBar',
+                    reflectToAttribute: true
+                },
+                {
+                    attribute: 'isCheckbox',
+                    reflectToAttribute: true
+                },
+                {
+                    attribute: 'resizable',
+                    reflectToAttribute: true
+                },
+                {
+                    attribute: 'hideable',
+                    reflectToAttribute: true
+                },
+                {
+                    attribute: 'hidden',
+                    reflectToAttribute: true
+                },
+                {
+                    attribute: 'checkboxStatus',
+                    value: {ALL_CHECKED: 'ALL_CHECKED', MULTIPLE_CHECKED: 'MULTIPLE_CHECKED', NONE_CHECKED: 'NONE_CHECKED'}
+                }
+            ];
+        }
+
+        connectedCallback() {
+            this._createDomReference();
+            if (typeof this.sortable === 'string' && this.labelWrapper) {
+                this.labelWrapper.classList.add('sortable');
+            }
+            if(this.isCheckbox){
+                this.setRenderer(this.checkboxRenderer);
+                this.checkbox.addEventListener('click', this._handleCheckboxEvent.bind(this));
+            }
+            if(this.resizable){
+                this.resizableArea.addEventListener('mousedown', this._resizeColumn.bind(this));
+            }
+            this.fire('gridColumnReady');
+        }
+
+        handleClick(clickEvent, requesting) {
+            this._requesting = requesting;
+            if (typeof this.sortable == 'string' && clickEvent.target.id == this.labelWrapper) {
+                this.sort();
+            }
+        }
+
+        _handleCheckboxEvent() {
+            let checkAll = (this.checkbox.checked == this.checkboxStatus.NONE_CHECKED);
+            this.setCheckboxStatus(checkAll ? this.checkboxStatus.ALL_CHECKED : this.checkboxStatus.NONE_CHECKED);
+            this.fire('gridSelectAllChange', checkAll);
+        }
+
+        setCheckboxStatus(status) {
+            if (this.isCheckbox && status) {
+                this.checkbox.removeAttribute('checked');
+                this.checkbox.removeAttribute('all-checked');
+                this.checkbox.checked = status;
+
+                switch (status) {
+                    case this.checkboxStatus.ALL_CHECKED:
+                        this.checkbox.setAttribute('all-checked', '');
+                    break;
+                    case this.checkboxStatus.NONE_CHECKED:
+                        this.checkbox.removeAttribute('checked');
+                        this.checkbox.removeAttribute('all-checked');
+                    break;
+                    case this.checkboxStatus.MULTIPLE_CHECKED:
+                        this.checkbox.setAttribute('checked', '');
+                    break;
+                }
+            }
+        }
+
+        _resizeListener(e) {
+            e.preventDefault();
+            let newWidth = this.startOffset + e.pageX;
+            if (newWidth < 50) {
+                return;
+            }
+            let columns = this.parentNode.querySelectorAll('dgt-gridcolumn');
+            for (let i = 0, len = columns.length; i < len; i++) {
+                let column = columns[i];
+                if (column.name === 'checkbox') {
+                    continue;
+                }
+                if (column.style.display === 'none') {
+                    continue;
+                }
+                column.style.width = column.offsetWidth + 'px';
+            }
+            this.style.width = newWidth + 'px';
+        }
+
+        _resizeColumn(e) {
+            e.stopPropagation();
+
+            this.draggable = false;
+            this.startOffset = this.offsetWidth - e.pageX;
+
+            let resizeFunction = this._resizeListener.bind(this);
+            document.addEventListener('mousemove', resizeFunction);
+            document.addEventListener('mouseup', function () {
+                this.draggable = this.parentNode.draggableColumns;
+                document.removeEventListener('mousemove', resizeFunction);
+            }.bind(this));
+        }
+
+        _createDomReference() {
+            this.labelWrapper = this.$.querySelector('.label');
+            this.resizableArea = this.$.querySelector('.resizable-area');
+            this._filter = this.querySelector('[slot=filter]');
+
+            if (this.isCheckbox !== undefined) {
+                this.checkbox = this.$.querySelector('.checkbox');
+            }
+        }
+
+        onKeyPressListener(e) {
+            if (e.keyCode == 13) {
+                this.fire('filtered');
+            }
+        }
+
+        getFilter() {
+            let filter = this._filter || this.$$('input');
+            if (filter && filter.value && filter.value != '') {
+                return {operator: '=', value: filter.value};
+            }
+        }
+
+        checkboxRenderer(element, userObject) {
+            let checkboxTemplate = this.$.querySelector('.checkbox').cloneNode(true);
+            checkboxTemplate.addEventListener('click', function() {
+                let row = this.parentElement.parentElement;
+                if (!this.hasAttribute('checked')) {
+                    row.select();
+                } else {
+                    row.deselect();
+                }
+            });
+            element.innerHTML = '';
+            element.appendChild(checkboxTemplate);
+
+        }
+
+        setRenderer(renderer){
+            this.renderer = renderer;
+        }
+
+        sort() {
+            if (this._requesting) {
+                return;
+            }
+            if (this.sortable == 'desc') this.sortable = 'asc';
+            else if (this.sortable == 'asc') this.sortable = '';
+            else this.sortable = 'desc';
+            this._sortDirectionChanged();
+            this.fire('sorted', this.sortable);
+        }
+
+        _sortDirectionChanged() {
+            if (typeof this.sortable == 'string') {
+                this.configSort(this.sortable);
+            }
+        }
+
+        configSort(sortType) {
+            this.sortable = sortType;
+            if (this.sortable == 'asc') {
+                this.labelWrapper.classList.remove('descending');
+                this.labelWrapper.classList.add('ascending');
+            } else if (this.sortable == 'desc') {
+                this.labelWrapper.classList.remove('ascending');
+                this.labelWrapper.classList.add('descending');
+            } else {
+                this.labelWrapper.classList.remove('descending');
+                this.labelWrapper.classList.remove('ascending');
+                this.labelWrapper.classList.add('sortable');
+            }
+        }
+
+        toggleFilter() {
+            this._showFilter = this.searchBar && !this._showFilter;
+        }
+
+        showFilter() {
+            this._showFilter = this.searchBar;
+        }
+
+        hideFilter() {
+            this._showFilter = false;
+        }
+
+        clearFilter() {
+            let inputFilter = this.$$('input');
+            if (this.searchBar && inputFilter) {
+                inputFilter.value = '';
+            }
+        }
+    }
+
+    DGTElement.registerElement('dgt-gridcolumn', DGTGridColumn);
+</script>

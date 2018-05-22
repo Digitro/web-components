@@ -1,0 +1,39 @@
+<link rel="import" href="../dgt-element/dgt-element.html">
+<link rel="import" href="dgt-gridcolumn.html">
+<template>
+    <style>
+        dgt-gridcolumns {
+            display: table-row;
+        }
+        :host {
+            display: table-row;
+        }
+
+    </style>
+    <slot></slot>
+
+</template>
+<script>
+    class DGTGridColumns extends DGTElement {
+        constructor(columns = []){
+            super();
+            this.columns = columns;
+        }
+        connectedCallback(){
+            for(let column of this.columns){
+                let gridColumn = new DGTGridColumn(column);
+                gridColumn.innerHTML = column.label;
+                this.appendChild(gridColumn);
+            }
+            this.fire('gridColumnsReady', this);
+        }
+        createCheckboxColumn(name){
+            let gridColumn = new DGTGridColumn({name: name, isCheckbox:true});
+            gridColumn.style.width = "35px";
+            let firstChild = this.querySelector('dgt-gridcolumn');
+            this.insertBefore(gridColumn, firstChild);
+            return gridColumn;
+        }
+    }
+    DGTElement.registerElement('dgt-gridcolumns', DGTGridColumns);
+</script>

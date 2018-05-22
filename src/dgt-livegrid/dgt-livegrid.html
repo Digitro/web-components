@@ -1,0 +1,873 @@
+<link rel="import" href="../dgt-element/dgt-element.html">
+<link rel="import" href="dgt-gridcolumns.html">
+<link rel="import" href="dgt-gridrows.html">
+
+<template>
+    <style>
+        dgt-livegrid {
+            display: block;
+        }
+
+        :host {
+            display: block;
+        }
+
+        .scroll-container {
+            height: var(--dgt-livegrid-height, auto);
+            overflow: auto;
+        }
+
+        .data-container {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        :host([block-text-selection]){
+            user-select: none;
+        }
+
+    </style>
+
+    <slot name="dgt-gridheader"></slot>
+    <div class="scroll-container">
+        <div class="data-container">
+            <slot name="dgt-gridcolumns"></slot>
+            <slot name="dgt-gridrows"></slot>
+        </div>
+        <slot name="spinner"></slot>
+        <slot name="message"></slot>
+    </div>
+    <slot name="dgt-gridfooter"></slot>
+
+</template>
+<script>
+    class DGTLivegrid extends DGTElement {
+        constructor() {
+            super();
+            this._columns = {};
+        }
+
+        static properties(instance) {
+            return [
+                {
+                    attribute: 'selectable',
+                    reflectToAttribute: true
+                },
+                {
+                    attribute: 'sortType',
+                    reflectToAttribute: true,
+                    value: 'single'
+                },
+                {
+                    attribute: 'hideColumns',
+                    reflectToAttribute: true,
+                    value: false
+                },
+                {
+                    attribute: 'pinLastColumn',
+                    reflectToAttribute: true,
+                    observer: instance._pinLastColumn.bind(instance)
+                },
+                {
+                    attribute: 'draggableColumns',
+                    reflectToAttribute: true,
+                    value: true
+                }
+            ];
+        }
+
+        connectedCallback() {
+            super.connectedCallback();
+            this.lastScrollTopPosition = 0;
+            this._requesting = false;
+            this.resetVariables();
+            this._createDomReferences();
+            this.createPagesFromStaticData();
+            this._addEventListeners();
+            this._size = 5 * Math.ceil(this.clientHeight / 35);
+            this._hideHiddenColumns();
+            this.listen('gridColumnsReady', function(e) {
+                this.gridColumns = e.target;
+                this._createDropDownHiddenColumns();
+                this.gridColumns.addEventListener('gridSelectAllChange', this.handleSelectAllChange.bind(this));
+                this._setDraggable();
+
+                if(this.selectable === 'multiple'){
+                    this.columns['checkbox'] = this.gridColumns.createCheckboxColumn('checkbox');
+                }
+
+            }.bind(this));
+
+            this.listen('gridColumnReady', this._setColumn.bind(this));
+        }
+
+        _setDraggable() {
+            if (!this.draggableColumns) {
+                return;
+            }
+            this.gridColumns.draggableColumns = this.draggableColumns;
+            this.gridColumns.addEventListener('dragstart', this._handleDragStart.bind(this));
+            this.gridColumns.addEventListener('drop', this._handleDrop.bind(this));
+            this.gridColumns.addEventListener('dragenter', this._handlePreventDefault.bind(this));
+            this.gridColumns.addEventListener('dragleave', this._handlePreventDefault.bind(this));
+            this.gridColumns.addEventListener('dragover', this._handlePreventDefault.bind(this));
+            this.gridColumns.addEventListener('dragend', this._handlePreventDefault.bind(this));
+        }
+
+        _handlePreventDefault(e) {
+            e.preventDefault();
+        }
+
+        _getTargetColumn(e) {
+            let target = e.target;
+            while (target != null && target.tagName != 'DGT-GRIDCOLUMN') {
+                target = target.parentElement;
+            }
+            return target;
+        }
+
+        _handleDragStart(e) {
+            e.stopPropagation();
+            this.setAttribute('block-text-selection', '');
+
+            let target = this._getTargetColumn(e);
+
+            if (!target.draggable) {
+                return;
+            }
+
+            let columnIndex = this._getElementDomIndex(target) + 1;
+
+            e.dataTransfer.effectAllowed = 'move';
+            //A linha abaixo é necessário para o firefox chamar os demais eventos de arrastar
+            e.dataTransfer.setData('text/plain', '');
+            this.column = {
+                index: columnIndex,
+                content: target,
+                oldClientX: e.clientX
+            };
+        }
+
+        _handleDrop(e) {
+            e.stopPropagation();
+
+            let target = this._getTargetColumn(e);
+            let content = this.column.content;
+            let movingColumnToTheRight = e.clientX > this.column.oldClientX;
+
+            let forbiddenDst = (target === content) || (target.tagName === 'SPAN') || target.hasAttribute('is-checkbox') || !target.hasAttribute('draggable')
+                || (content.nextSibling && content.nextSibling.tagName !== 'DGT-GRIDCOLUMN' && this.pinLastColumn)
+                || (movingColumnToTheRight && target.nextSibling && target.nextSibling.tagName !== 'DGT-GRIDCOLUMN' && this.pinLastColumn);
+
+            if (forbiddenDst) {
+                return;
+            }
+
+            let destIndex = this._getElementDomIndex(target) + 1;
+
+            if (movingColumnToTheRight) {
+                if (target.nextSibling && target.nextSibling.tagName === 'DGT-GRIDCOLUMN') {
+                    content.parentElement.insertBefore(content, target.nextSibling);
+                } else {
+                    content.parentElement.appendChild(content);
+                }
+            } else {
+                content.parentElement.insertBefore(content, target);
+            }
+
+            this._updateCellsSequence(e.clientX, this.column, destIndex);
+            this._updateColumnsSequence();
+            this.removeAttribute('block-text-selection');
+        }
+
+        _updateCellsSequence(currentClientX, column, destIndex) {
+            for (let page of this._pages) {
+                for (let row of page.domElements) {
+                    let cell = row.querySelector('dgt-gridcell:nth-child(' + column.index + ')');
+                    let cellDest = row.querySelector('dgt-gridcell:nth-child(' + destIndex + ')');
+                    let targetCell = cellDest.nextSibling;
+                    if (currentClientX < column.oldClientX) {
+                        targetCell = cellDest;
+                    }
+                    row.insertBefore(cell, targetCell);
+                }
+            }
+        }
+
+        _updateColumnsSequence() {
+            let columnsElements = this.querySelectorAll('dgt-gridcolumn');
+            let newColumnsSequence = {};
+            for (let element of columnsElements) {
+                let key = element.name;
+                newColumnsSequence[key] = this._columns[key];
+            }
+            this._columns = newColumnsSequence;
+        }
+
+        _setColumn(e) {
+            const column = e.target;
+            column.addEventListener('sorted', this._handleSortChange.bind(this));
+            column.addEventListener('filtered', this.reload.bind(this));
+            this._columns[column.name] = column;
+            if (column.isCheckbox) {
+                this._updateColumnsSequence();
+            }
+        }
+
+        handleSelectAllChange(event) {
+            let selected = event.detail;
+            this._selectedRows = 0;
+            for (let page of this._pages) {
+                let rows = page.domElements;
+                for (let row of rows) {
+                    if (row.hasAttribute('disabled')) {
+                        continue;
+                    }
+                    if (selected) {
+                        row.select(null, true);
+                        this._selectedRows++;
+                    } else {
+                        row.deselect(null, true);
+                    }
+                }
+            }
+            this.updateCheckboxStatus();
+        }
+
+        updateCheckboxStatus() {
+            if (this.selectable === 'multiple' && this._columns['checkbox']) {
+                let column = this._columns['checkbox'];
+                let status = this._selectedRows === 0 ? column.checkboxStatus.NONE_CHECKED :
+                    this._selectedRows === this._index ? column.checkboxStatus.ALL_CHECKED : column.checkboxStatus.MULTIPLE_CHECKED;
+                column.setCheckboxStatus(status);
+            }
+        }
+
+        createPagesFromStaticData() {
+            let staticRows = this.querySelectorAll('dgt-gridrow');
+            for (let row of staticRows) {
+                row.index = this._index;
+                row.selectOnClick = this.selectable !== 'multiple';
+                this._index++;
+            }
+            if (staticRows.length > 0) {
+                this._count = staticRows.length;
+                this.addValuesToPage(this.scrollContainer.scrollHeight, staticRows);
+            }
+        }
+
+        _pinLastColumn() {
+            if (!this.pinLastColumn) {
+                this.classList.remove('pin-last-column');
+                return;
+            }
+            this.classList.add('pin-last-column');
+        }
+
+        _getElementDomIndex(element) {
+            return Array.prototype.indexOf.call(element.parentElement.children, element);
+        }
+
+        _createDropDownHiddenColumns() {
+            return;
+            if (!this.hideColumns) {
+                return;
+            }
+            this.dropdownHideColumns = this.$$('#' + this.idDropdownHideColumns);
+            let columns = this.dataContainer.querySelectorAll('dgt-gridcolumn');
+            for (let column of columns) {
+                if (!column.hideable) {
+                    continue;
+                }
+                let columnWidth = (column.offsetWidth !== 0) ? column.offsetWidth : 200;
+                column.style.width = columnWidth + 'px';
+                let label = document.createElement('label');
+                let input = document.createElement('input');
+                label.setAttribute('class', 'menu-item');
+                input.type = 'checkbox';
+                input.name = column.name;
+                input.value = column.name;
+                if (!column.hidden) {
+                    input.setAttribute('checked', '');
+                }
+                label.appendChild(input);
+                label.innerHTML += column.label;
+                this.dropdownHideColumns.appendChild(label);
+            }
+            this.dropdownHideColumns.addEventListener('click', this._handleHideColumns.bind(this));
+        }
+
+        _handleHideColumns(e) {
+            let target = e.target;
+            if (target.tagName !== 'INPUT') {
+                return;
+            }
+            let column = this.querySelector('dgt-gridcolumn[name="' + target.name + '"]');
+            if (target.hasAttribute('checked')) {
+                column.hidden = true;
+                target.removeAttribute('checked');
+            } else {
+                column.hidden = false;
+                target.setAttribute('checked', '');
+            }
+            column.style.display = column.hidden ? 'none' : 'table-cell';
+            this.__updateHiddenCellsFromColumn(column);
+        }
+
+        __updateHiddenCellsFromColumn(column) {
+            let columnIndex = this._getElementDomIndex(column) + 1;
+            let cells = this.querySelectorAll('dgt-gridcell:nth-child(' + columnIndex + ')');
+            let display = column.hidden ? 'none' : 'table-cell';
+            this._displayCells(cells, display);
+        }
+
+        _hideHiddenColumns() {
+            let columns = this.dataContainer.querySelectorAll('dgt-gridcolumn');
+            for (let column of columns) {
+                if (!column.hideable && !column.hidden) {
+                    continue;
+                }
+                this.__updateHiddenCellsFromColumn(column);
+            }
+        }
+
+        _displayCells(cells, display) {
+            for (let cell of cells) {
+                cell.style.display = display;
+            }
+        }
+
+        addValues(userObjects) {
+            if (userObjects) {
+                this._count += (userObjects.length || 1);
+                this._addValues(userObjects);
+            }
+        }
+
+        _addValues(userObjects) {
+            let domElements = this.createRowsDomFragment(userObjects);
+            let previousHeight = this.dataContainer.scrollHeight;
+            let nRows = domElements.children.length;
+            if (nRows > 0) {
+                let rowsHtmlElements = [];
+                for (let i = 0; i < nRows; i++) {
+                    rowsHtmlElements.push(domElements.children[i]);
+                }
+                this.gridRows.appendChild(domElements);
+                this._index += (userObjects.length || 1);
+                let pageHeight = this.dataContainer.scrollHeight - previousHeight;
+                this.addValuesToPage(pageHeight, rowsHtmlElements);
+                this._updatePages();
+                this.updateCheckboxStatus();
+            }
+        }
+
+        addValuesToPage(pageHeight, rowsHtmlElements) {
+            this._pages.push({
+                height: pageHeight,
+                domElements: rowsHtmlElements,
+                visible: true,
+            });
+        }
+
+        resetVariables() {
+            this._index = 0;
+            this._selectedRows = 0;
+            this._count = 0;
+            this._start = 0;
+            this._end = 0;
+            this._pages = [];
+        }
+
+        clear() {
+            this.resetVariables();
+            this._clearing = true;
+            this.gridRows.innerHTML = '';
+            this.fakeScrollTop.removeAttribute('style');
+            this.fakeScrollBottom.removeAttribute('style');
+            //this.messageContainer.classList.add('hidden');
+        }
+
+        get rows() {
+            let rowsReturn = new Array();
+            for (let page of this._pages) {
+                for (let row of page.domElements) {
+                    rowsReturn[rowsReturn.length] = row;
+                }
+            }
+            return rowsReturn;
+        }
+
+        get selectedRows() {
+            let selectedRows = [];
+            for (let page of this._pages) {
+                for (let row of page.domElements) {
+                    if (row.hasAttribute('selected')) {
+                        selectedRows.push(row);
+                    }
+                }
+            }
+            return selectedRows;
+        }
+
+        get disabledRows() {
+            let disabledRows = [];
+            for (let page of this._pages) {
+                for (let row of page.domElements) {
+                    if (row.hasAttribute('disabled')) {
+                        disabledRows.push(row);
+                    }
+                }
+            }
+            return disabledRows;
+        }
+
+        get selectedValues() {
+            let values = [];
+            for (let row of this.selectedRows) {
+                values.push(row.value);
+            }
+            return values;
+        }
+
+        load() {
+            if (this.gridLoadMethod) {
+                this._requesting = true;
+//                this.spinnerContainer.classList.remove('hidden');
+                this.gridLoadMethod(this._getGridRequest(), this._requestSuccess.bind(this), this._requestError.bind(this));
+            }
+        }
+
+        reload() {
+            this.clear();
+            this.load();
+            this.scrollContainer.scrollTop = 0;
+            this.lastScrollTopPosition = 0;
+            this._updatePages();
+        }
+
+        removeValues(indexes) {
+            if (Array.isArray(indexes)) {
+                for (let index of indexes) {
+                    this.removeValue(index);
+                }
+            } else {
+                this.removeValue(indexes);
+            }
+            this._updatePages();
+            this.updateCheckboxStatus();
+        }
+
+        removeValue(index) {
+            for (let page of this._pages) {
+                let rows = page.domElements;
+                for (let j = 0; j < rows.length; j++) {
+                    if (rows[j].index == index) {
+                        //deletando do cache
+                        let rowToDelete = rows[j];
+                        page.height -= rowToDelete.offsetHeight;
+                        rows.splice(j, 1);
+                        if (page.visible) {
+                            rowToDelete.remove();
+                        }
+                        this._count--;
+                        //TODO verificar, se for o último elemento da página, remover a página
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        updateValue(index, userObject) {
+            let row = this.rows[index];
+            if (row) row.value = userObject;
+        }
+
+        setGridLoadProxy(loadMethod) {
+            this.gridLoadMethod = loadMethod;
+        }
+
+        _createDomReferences() {
+            this.header = this.$.querySelector('.header');
+            this.dropdownHideColumns = this.$.querySelector('.dropdown-columns');
+            this.dataContainer = this.$.querySelector('.data-container');
+            this.scrollContainer = this.$.querySelector('.scroll-container');
+            this.gridColumns = this.querySelector('[slot=dgt-gridcolumns]');
+            this.gridRows = this.querySelector('[slot=dgt-gridrows]');
+            if(!this.gridRows){
+                this.gridRows = new DGTGridRows();
+                this.gridRows.setAttribute('slot', 'dgt-gridrows');
+                this.appendChild(this.gridRows);
+            }
+            this.messageContainer = this.querySelector('[slot=message]');
+            this.spinnerContainer = this.querySelector('[slot=spinner]');
+            this.fakeScrollTop = this.gridRows.$.querySelector('.fake-scroll-top');
+            this.fakeScrollBottom = this.gridRows.$.querySelector('.fake-scroll-bottom');
+        }
+
+        _handleSortChange(event) {
+            let sortedColumn = event.target;
+            if (this.sortType === 'single') {
+                for (let column of this._columns) {
+                    if (column.sortable && column !== sortedColumn) {
+                        column.configSort('');
+                    }
+                }
+            }
+            this.reload();
+        }
+
+        _getGridRequest() {
+            return {
+                index: this._index,
+                count: this._size || 40,
+                sortOrder: this._getSortOrder(),
+                filter: this._getFilter()
+            };
+        }
+
+        _requestSuccess(userObjects, count) {
+            this._requesting = false;
+           // this.spinnerContainer.classList.add('hidden');
+            this._count = count || this._count;
+            if (userObjects.length > 0) {
+                this._addValues(userObjects);
+            } else {
+                if (this._index === 0) {
+                    this.messageContainer.classList.remove('hidden');
+                }
+                //Scroll retornando 01 pixel para não ficar solicitando infinitamente
+                this.scrollContainer.scrollTop = this.scrollContainer.scrollTop - 1;
+            }
+        }
+
+        _requestError(e) {
+            this._requesting = false;
+            DGTElement.error(e);
+        }
+
+        _addEventListeners() {
+            this.gridRows.listen('dblclick', this._handleDblClick.bind(this));
+            this.gridRows.listen('click', this._handleClick.bind(this));
+            this.gridRows.listen('selectRow', this._handleSelectedRow.bind(this));
+            this.gridRows.listen('deselectRow', this._handleDeselectRow.bind(this));
+            this.scrollContainer.addEventListener('scroll', this._handleBodyScroll.bind(this));
+        }
+
+        _handleBodyScroll() {
+            //Evitar chamada do setLoadGridProxy quando o scroll for horizontal na grid
+            if (this.scrollContainer.scrollTop === this.lastScrollTopPosition) {
+                return;
+            }
+            this.lastScrollTopPosition = this.scrollContainer.scrollTop;
+            if (this._clearing) {
+                this._clearing = false;
+                return;
+            }
+            this._updatePages();
+            if (!this._requesting && this.scrollContainer.scrollTop + this.scrollContainer.clientHeight >= this.scrollContainer.scrollHeight) {
+                this.load();
+            }
+        }
+
+        firePageInformation() {
+            // ignore resize events as long as an actualResizeHandler execution is in the queue
+            if (!this.fireInformationTimeout) {
+                this.fireInformationTimeout = setTimeout(function () {
+                    this.fireInformationTimeout = null;
+                    let pageInfo = {};
+                    if (this._count > 0) {
+                        pageInfo.visibleRows = this.getVisibleInterval();
+                        pageInfo.count = this._count;
+                        //console.log('pageInfo', JSON.stringify(pageInfo));
+                        this.fire('gridInfo', pageInfo);
+                    }
+                }.bind(this), 100);
+            }
+        }
+
+        _handleSelectedRow(e) {
+            let msg = e.detail;
+            if (this.selectable !== 'multiple') {
+                for (let row of this.selectedRows) {
+                    if (row.index !== msg.index) {
+                        row.deselect();
+                    }
+                }
+            } else {
+                this._selectedRows++;
+                this.updateCheckboxStatus();
+            }
+        }
+
+        _handleDeselectRow() {
+            if (this.selectable === 'multiple') {
+                this._selectedRows--;
+                this.updateCheckboxStatus();
+            }
+        }
+
+        _handleDblClick(e) {
+            let target = e.target;
+            while (target != null && target.tagName != 'DGT-LIVEGRID') {
+                if (e.cancelBubble) {
+                    return;
+                }
+
+                if (typeof this.hasAttribute('selectable') && target.handleDblClick) {
+                    target.handleDblClick(e, this._requesting);
+                }
+                if (target.hasAttribute('dblclick-event')) {
+                    let eventName = target.getAttribute('dblclick-event');
+                    let eventObject = {target: target, row: this._getRowElement(target), dblClickEvent: e};
+                    this.fire(eventName, eventObject);
+                }
+                target = target.parentElement;
+            }
+        }
+
+        _handleClick(e) {
+            let target = e.target;
+            while (target != null && target.tagName != 'DGT-LIVEGRID') {
+                if (e.cancelBubble) {
+                    return;
+                }
+
+                if (typeof this.hasAttribute('selectable') && target.handleClick) {
+                    target.handleClick(e, this._requesting);
+                }
+                if (target.hasAttribute('click-event')) {
+                    let eventName = target.getAttribute('click-event');
+                    let eventObject = {target: target, row: this._getRowElement(target), clickEvent: e};
+                    this.fire(eventName, eventObject);
+                }
+                target = target.parentElement;
+            }
+        }
+
+        _getRowElement(target) {
+            while (target != null) {
+                if (target.tagName == 'DGT-GRIDROW') {
+                    return target;
+                }
+                target = target.parentElement;
+            }
+            return null;
+        }
+
+        _updatePages() {
+            let distance = this.scrollContainer.clientHeight * 3;
+            let scrollPosition = this.scrollContainer.scrollTop;
+            let start = this._getPageByPosition(scrollPosition - distance);
+            let end = this._getPageByPosition(scrollPosition + distance);
+
+            //console.log('distance', distance, 'scrollPosition', scrollPosition, 'start', start, 'end', end);
+
+            if (start != this._start || end != this._end) {
+                this._showPages(start, end);
+                this._start = start;
+                this._end = end;
+            }
+            this.firePageInformation();
+        }
+
+        _getPagesHeight(start, end) {
+            let height = 0;
+            if (start >= 0 && end >= 0) {
+                for (let i = start; i < end; i++) {
+                    height += this._pages[i].height;
+                }
+            }
+            return height + 'px';
+        }
+
+        removePageElementsFromDOM(start, end) {
+            for (let i = start; i < end && i <= this._pages.length; i++) {
+                let page = this._pages[i];
+                if (page.visible) {
+                    for (let row of page.domElements) {
+                        row.remove();
+                    }
+                    page.visible = false;
+                }
+            }
+        }
+
+        _showPages(start, end) {
+
+            //Servem para fazer com que o scroll represente o tamanho total dos dados carregados na Grid
+            this.fakeScrollTop.style.height = this._getPagesHeight(0, start);
+            this.fakeScrollBottom.style.height = this._getPagesHeight(end + 1, this._pages.length);
+
+            this.removePageElementsFromDOM(0, start);
+            this.removePageElementsFromDOM(end + 1, this._pages.length);
+
+            let fragment = document.createDocumentFragment();
+            for (let i = start; i <= end; i++) {
+                let page = this._pages[i];
+                if (!page.visible) {
+                    for (let row of page.domElements) {
+                        fragment.appendChild(row);
+                    }
+                    page.visible = true;
+                }
+            }
+
+            let insertAtTop = this.gridRows.querySelector("dgt-gridrow");
+            if (this._start > start) {
+                this.gridRows.insertBefore(fragment, insertAtTop);
+            } else {
+                this.gridRows.appendChild(fragment);
+            }
+            this._hideHiddenColumns();
+        }
+
+        _getPageByPosition(position) {
+            if (position <= 0) {
+                return 0;
+            }
+            let start = 0;
+            let end = 0;
+            for (let i = 0; i < this._pages.length; i++) {
+                let page = this._pages[i];
+                end += page.height;
+                if (position >= start && position <= end) {
+                    return i;
+                }
+                start += page.height;
+            }
+            return this._pages.length - 1;
+        }
+
+        _isLastPageVisible() {
+            return (this._end >= this._pages.length - 1);
+        }
+
+        _getSortOrder() {
+            return;
+            let sortOrder = [];
+            let columns = this._columns;
+            let properties = Object.keys(columns);
+            for (let property of properties) {
+                let column = this._columns[property];
+                if (column.sortable && column.sortable != '') {
+                    sortOrder.push({
+                        column: property,
+                        direction: column.sortable
+                    });
+                }
+            }
+            return sortOrder;
+        }
+
+        _getFilter() {
+            let filters = [];
+            let columns = this._columns;
+            for (let property in columns) {
+                let column = this._columns[property];
+                /*if (column.searchBar) {
+                    let filter = column.getFilter();
+                    if (filter) {
+                        filter.column = property;
+                        filters.push(filter);
+                    }
+                }*/
+            }
+            return filters;
+        }
+
+        createRowsDomFragment(userObjects) {
+            let domElements = document.createDocumentFragment();
+            if (Array.isArray(userObjects)) {
+                for (let i = 0; i < userObjects.length; i++) {
+                    domElements.appendChild(this._createRowDomElement(this._index + i, userObjects[i]));
+                }
+            } else {
+                domElements.appendChild(this._createRowDomElement(this._index + 1, userObjects));
+            }
+            return domElements;
+        }
+
+        _createRowDomElement(index, userObject) {
+            let selectOnClick = this.selectable !== 'multiple';
+            return new DGTGridRow(index, userObject, this.columns, selectOnClick);
+        }
+
+        set columns(columns) {
+            if (this.gridColumns) {
+                this.gridColumns.remove();
+            }
+            this.clear();
+            this.gridColumns = new DGTGridColumns(columns);
+            this.gridColumns.setAttribute('slot', 'dgt-gridcolumns');
+            this.appendChild(this.gridColumns);
+        }
+        get columns(){
+            const _columns = {};
+            let dgtColumns = this.gridColumns.querySelectorAll('dgt-gridcolumn');
+            for (let column of dgtColumns) {
+                let name = column.name;
+                _columns[name] = column;
+            }
+            return _columns;
+        }
+
+        showFilter() {
+            for (let column of this._columns) {
+                column.showFilter();
+            }
+        }
+
+        hideFilter() {
+            for (let column of this._columns) {
+                column.hideFilter();
+            }
+        }
+
+        toggleFilter() {
+            for (let column of this._columns) {
+                column.toggleFilter();
+            }
+        }
+
+        get count() {
+            return this._count;
+        }
+
+        getVisibleInterval() {
+            let startPosition = this.scrollContainer.offsetTop + this.scrollContainer.scrollTop + this.gridColumns.offsetHeight;
+            let endPosition = startPosition + this.scrollContainer.offsetHeight - this.gridColumns.offsetHeight;
+            let visibleRows = [];
+            let count = 0;
+            for (let i = 0; i <= this._end; i++) {
+                let page = this._pages[i];
+                if (i >= this._start) {
+                    let domElements = page.domElements;
+                    for (let j = 0; j < domElements.length; j++) {
+                        count++;
+                        let row = domElements[j];
+                        let rowStartPosition = row.offsetTop;
+                        let rowEndPosition = rowStartPosition + row.offsetHeight;
+                        if (startPosition >= rowStartPosition && rowEndPosition > startPosition) {
+                            visibleRows[0] = count;
+                        } else if (endPosition >= rowStartPosition && rowEndPosition >= endPosition) {
+                            visibleRows[1] = count;
+                            return visibleRows;
+                        }
+                    }
+                } else {
+                    count += page.domElements.length;
+                }
+            }
+            visibleRows[1] = count;
+            return visibleRows;
+        }
+
+    }
+
+    DGTElement.registerElement('dgt-livegrid', DGTLivegrid);
+</script>
