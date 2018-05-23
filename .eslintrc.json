@@ -12,7 +12,9 @@
     "DGTElement": true,
     "DGTGridColumns": true,
     "DGTGridColumn": true,
-    "DGTGridRow": true
+    "DGTGridRow": true,
+    "DGTGridCell": true,
+    "DGTGridRows": true
   },
   "rules": {
     "indent": [

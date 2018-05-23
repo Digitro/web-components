@@ -158,7 +158,7 @@
     </script>
 
 
- <dgt-livegrid id="grid-2" selectable="multiple"></dgt-livegrid>
+ <dgt-livegrid id="grid-2" selectable="multiple" pin-last-column></dgt-livegrid>
 
   <script>
       document.addEventListener('WebComponentsReady', function() {
@@ -176,7 +176,8 @@
                   searchBar: true,
                   resizable: true,
                   hideable: true,
-                  draggable: true
+                  draggable: true,
+                  showSearchBar: true
               },{
                   label:  "Date",
                   name:  "timestamp",
@@ -195,15 +196,13 @@
                   name:  "seed.second",
                   searchBar: true,
                   resizable: true,
-                  hideable: true,
-                  draggable: true
+                  hideable: true
               }];
 
 
           grid.setGridLoadProxy(function(gridRequest, successCallback, errorCallback){
 
               var clone = database.slice(0);
-
               var filter = gridRequest.filter[0];
               if (filter && filter.column == "page"){
                   var cloneFiltered = clone.filter( function(value){
@@ -212,13 +211,13 @@
                   clone = cloneFiltered;
               }
 
-              /*var sortOrder = gridRequest.sortOrder[0];
+              var sortOrder = gridRequest.sortOrder[0];
               if (sortOrder && sortOrder.column == "timestamp"){
                   if (sortOrder.direction == "asc")
                       clone.sort(function(a, b){ return (a.timestamp - b.timestamp); });
                   else if (sortOrder.direction == "desc")
                       clone.sort(function(a, b){ return (b.timestamp - a.timestamp); });
-              }*/
+              }
 
               var index = gridRequest.index;
               var numElements = gridRequest.count;
@@ -237,6 +236,104 @@
       });
   </script>
 
+    <dgt-livegrid id="livegrid-6" selectable="multiple">
+        <div slot="dgt-gridheader">
+            <button id="toggle-filter">Toggle Filter</button>
+            <button id="show-filter">Show Filter</button>
+            <button id="hide-filter">Hide Filter</button>
+            <div id="count-div"></div>  &nbsp;registros
+        </div>
+        <dgt-gridcolumns slot="dgt-gridcolumns">
+            <dgt-gridcolumn name="index" style="width:100px">Index</dgt-gridcolumn>
+            <dgt-gridcolumn name="page" style="width:100px" search-bar sortable>Page</dgt-gridcolumn>
+            <dgt-gridcolumn name="timestamp" search-bar sortable>Date</dgt-gridcolumn>
+            <dgt-gridcolumn name="seed.first" >First Seed</dgt-gridcolumn>
+            <dgt-gridcolumn name="actions" style="width:100px">Actions</dgt-gridcolumn>
+        </dgt-gridcolumns>
+    </dgt-livegrid>
+
+    <script>
+        document.addEventListener('WebComponentsReady', function(){
+            var grid6 = document.querySelector("#livegrid-6");
+
+            grid6.columns["timestamp"].setRenderer(timestampRenderer);
+
+            var toggleFilter = document.getElementById("toggle-filter");
+            toggleFilter.addEventListener('click', function(){
+                grid6.toggleFilter();
+            });
+
+            var showFilter = document.getElementById("show-filter");
+            showFilter.addEventListener('click', function(){
+                grid6.showFilter();
+            });
+
+            var hideFilter = document.getElementById("hide-filter");
+            hideFilter.addEventListener('click', function(){
+                grid6.hideFilter();
+            });
+
+            var countDiv = document.getElementById('count-div');
+
+            grid6.setGridLoadProxy(function(gridRequest, successCallback, errorCallback){
+                var clone = database.slice(0);
+
+                var filter = gridRequest.filter[0];
+                if (filter && filter.column == "page"){
+                    var cloneFiltered = clone.filter( function(value){
+                        return (value.page == filter.value);
+                    });
+                    clone = cloneFiltered;
+                }
+
+                var sortOrder = gridRequest.sortOrder[0];
+                if (sortOrder && sortOrder.column == "timestamp"){
+                    if (sortOrder.direction == "asc")
+                        clone.sort(function(a, b){ return (a.timestamp - b.timestamp); });
+                    else if (sortOrder.direction == "desc")
+                        clone.sort(function(a, b){ return (b.timestamp - a.timestamp); });
+                }
+
+                var index = gridRequest.index;
+                var numElements = gridRequest.count;
+                var elements = [];
+                for (var i = 0; i < numElements; i++){
+                    if (index + i >= clone.length) break;
+                    elements.push(clone[index + i]);
+                }
+                setTimeout( function(){ successCallback(elements, clone.length);}, 1000);
+            });
+
+            grid6.addEventListener('gridInfo', function(e){
+                var pageInfo = e.detail;
+                var visibleRows = pageInfo.visibleRows;
+                countDiv.innerText = 'Registros ' + visibleRows[0] + '-' + visibleRows[1] + ' de - ' + pageInfo.count;
+            });
+
+            var actionsRenderer = function(element, userObject){
+                var btn = document.createElement('button');
+                btn.innerHTML = 'Delete';
+                btn.setAttribute('click-event', 'removeDataSample');
+                element.appendChild(btn);
+            };
+            grid6.columns["actions"].setRenderer(actionsRenderer);
+
+            grid6.addEventListener('removeDataSample', function(e){
+                console.log('removeDataSample');
+                var clickEvent = e.detail.clickEvent;
+                clickEvent.cancelBubble = true;
+                var row = e.detail.row;
+                grid6.removeValues(row.index);
+            });
+
+            grid6.addEventListener('clickRow', function(e){
+                console.log('clickRow');
+            });
+
+            grid6.load();
+            grid6.showFilter();
+        });
+    </script>
 
 <h3 class="mar-bot">
     Exemplos dgt-livegrid com linhas desativadas e duplo clique na linha para selecionar
@@ -346,8 +443,6 @@
             grid7.load();
         });
     </script>
-
-
 
 </body>
 </html>

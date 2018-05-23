@@ -8,7 +8,6 @@
         :host {
             display: table-row;
         }
-
     </style>
     <slot></slot>
 
@@ -29,7 +28,7 @@
         }
         createCheckboxColumn(name){
             let gridColumn = new DGTGridColumn({name: name, isCheckbox:true});
-            gridColumn.style.width = "35px";
+            gridColumn.style.width = '35px';
             let firstChild = this.querySelector('dgt-gridcolumn');
             this.insertBefore(gridColumn, firstChild);
             return gridColumn;

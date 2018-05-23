@@ -7,16 +7,13 @@
         dgt-livegrid {
             display: block;
         }
-
         :host {
             display: block;
         }
-
         .scroll-container {
             height: var(--dgt-livegrid-height, auto);
             overflow: auto;
         }
-
         .data-container {
             display: table;
             table-layout: fixed;
@@ -24,11 +21,9 @@
             overflow-x: hidden;
             overflow-y: auto;
         }
-
         :host([block-text-selection]){
             user-select: none;
         }
-
     </style>
 
     <slot name="dgt-gridheader"></slot>
@@ -50,7 +45,7 @@
             this._columns = {};
         }
 
-        static properties(instance) {
+        static properties() {
             return [
                 {
                     attribute: 'selectable',
@@ -65,11 +60,6 @@
                     attribute: 'hideColumns',
                     reflectToAttribute: true,
                     value: false
-                },
-                {
-                    attribute: 'pinLastColumn',
-                    reflectToAttribute: true,
-                    observer: instance._pinLastColumn.bind(instance)
                 },
                 {
                     attribute: 'draggableColumns',
@@ -109,12 +99,12 @@
                 return;
             }
             this.gridColumns.draggableColumns = this.draggableColumns;
-            this.gridColumns.addEventListener('dragstart', this._handleDragStart.bind(this));
-            this.gridColumns.addEventListener('drop', this._handleDrop.bind(this));
-            this.gridColumns.addEventListener('dragenter', this._handlePreventDefault.bind(this));
-            this.gridColumns.addEventListener('dragleave', this._handlePreventDefault.bind(this));
-            this.gridColumns.addEventListener('dragover', this._handlePreventDefault.bind(this));
-            this.gridColumns.addEventListener('dragend', this._handlePreventDefault.bind(this));
+            this.gridColumns.listen('dragstart', this._handleDragStart.bind(this));
+            this.gridColumns.listen('drop', this._handleDrop.bind(this));
+            this.gridColumns.listen('dragenter', this._handlePreventDefault.bind(this));
+            this.gridColumns.listen('dragleave', this._handlePreventDefault.bind(this));
+            this.gridColumns.listen('dragover', this._handlePreventDefault.bind(this));
+            this.gridColumns.listen('dragend', this._handlePreventDefault.bind(this));
         }
 
         _handlePreventDefault(e) {
@@ -142,7 +132,7 @@
             let columnIndex = this._getElementDomIndex(target) + 1;
 
             e.dataTransfer.effectAllowed = 'move';
-            //A linha abaixo é necessário para o firefox chamar os demais eventos de arrastar
+            //This line is necessary for firefox
             e.dataTransfer.setData('text/plain', '');
             this.column = {
                 index: columnIndex,
@@ -159,8 +149,7 @@
             let movingColumnToTheRight = e.clientX > this.column.oldClientX;
 
             let forbiddenDst = (target === content) || (target.tagName === 'SPAN') || target.hasAttribute('is-checkbox') || !target.hasAttribute('draggable')
-                || (content.nextSibling && content.nextSibling.tagName !== 'DGT-GRIDCOLUMN' && this.pinLastColumn)
-                || (movingColumnToTheRight && target.nextSibling && target.nextSibling.tagName !== 'DGT-GRIDCOLUMN' && this.pinLastColumn);
+                || (movingColumnToTheRight && target.nextSibling && target.nextSibling.tagName !== 'DGT-GRIDCOLUMN' && this.hasAttribute('pin-last-column'));
 
             if (forbiddenDst) {
                 return;
@@ -209,8 +198,8 @@
 
         _setColumn(e) {
             const column = e.target;
-            column.addEventListener('sorted', this._handleSortChange.bind(this));
-            column.addEventListener('filtered', this.reload.bind(this));
+            column.listen('sorted', this._handleSortChange.bind(this));
+            column.listen('filtered', this.reload.bind(this));
             this._columns[column.name] = column;
             if (column.isCheckbox) {
                 this._updateColumnsSequence();
@@ -260,11 +249,11 @@
         }
 
         _pinLastColumn() {
-            if (!this.pinLastColumn) {
-                this.classList.remove('pin-last-column');
+            if (!this.hasAttribute('pin-last-column')) {
+                this.removeAttribute('pin-last-column');
                 return;
             }
-            this.classList.add('pin-last-column');
+            this.setAttribute('pin-last-column', '');
         }
 
         _getElementDomIndex(element) {
@@ -512,8 +501,9 @@
         _handleSortChange(event) {
             let sortedColumn = event.target;
             if (this.sortType === 'single') {
-                for (let column of this._columns) {
-                    if (column.sortable && column !== sortedColumn) {
+                for (let property in this.columns) {
+                    let column = this.columns[property];
+                    if (column.hasAttribute('sortable') && column !== sortedColumn) {
                         column.configSort('');
                     }
                 }
@@ -540,7 +530,7 @@
                 if (this._index === 0) {
                     this.messageContainer.classList.remove('hidden');
                 }
-                //Scroll retornando 01 pixel para não ficar solicitando infinitamente
+                //Scroll returns one pixel to prevent request looping
                 this.scrollContainer.scrollTop = this.scrollContainer.scrollTop - 1;
             }
         }
@@ -552,14 +542,14 @@
 
         _addEventListeners() {
             this.gridRows.listen('dblclick', this._handleDblClick.bind(this));
-            this.gridRows.listen('click', this._handleClick.bind(this));
+            this.scrollContainer.addEventListener('click', this._handleClick.bind(this));
             this.gridRows.listen('selectRow', this._handleSelectedRow.bind(this));
             this.gridRows.listen('deselectRow', this._handleDeselectRow.bind(this));
             this.scrollContainer.addEventListener('scroll', this._handleBodyScroll.bind(this));
         }
 
         _handleBodyScroll() {
-            //Evitar chamada do setLoadGridProxy quando o scroll for horizontal na grid
+            //Prevent call setLoadGridProxy when scroll is horizontal
             if (this.scrollContainer.scrollTop === this.lastScrollTopPosition) {
                 return;
             }
@@ -583,7 +573,6 @@
                     if (this._count > 0) {
                         pageInfo.visibleRows = this.getVisibleInterval();
                         pageInfo.count = this._count;
-                        //console.log('pageInfo', JSON.stringify(pageInfo));
                         this.fire('gridInfo', pageInfo);
                     }
                 }.bind(this), 100);
@@ -617,7 +606,6 @@
                 if (e.cancelBubble) {
                     return;
                 }
-
                 if (typeof this.hasAttribute('selectable') && target.handleDblClick) {
                     target.handleDblClick(e, this._requesting);
                 }
@@ -632,11 +620,14 @@
 
         _handleClick(e) {
             let target = e.target;
+            let activeElement = target.$ ? target.$.activeElement : null;
             while (target != null && target.tagName != 'DGT-LIVEGRID') {
                 if (e.cancelBubble) {
                     return;
                 }
-
+                if(target.hasAttribute('sortable') && activeElement && activeElement.classList.contains('label')){
+                    target.sort(this._requesting);
+                }
                 if (typeof this.hasAttribute('selectable') && target.handleClick) {
                     target.handleClick(e, this._requesting);
                 }
@@ -717,7 +708,7 @@
                 }
             }
 
-            let insertAtTop = this.gridRows.querySelector("dgt-gridrow");
+            let insertAtTop = this.gridRows.querySelector('dgt-gridrow');
             if (this._start > start) {
                 this.gridRows.insertBefore(fragment, insertAtTop);
             } else {
@@ -748,13 +739,11 @@
         }
 
         _getSortOrder() {
-            return;
             let sortOrder = [];
-            let columns = this._columns;
-            let properties = Object.keys(columns);
-            for (let property of properties) {
-                let column = this._columns[property];
-                if (column.sortable && column.sortable != '') {
+            let columns = this.columns;
+            for (let property in columns) {
+                let column = this.columns[property];
+                if (column.hasAttribute('sortable') && column.sortable != '') {
                     sortOrder.push({
                         column: property,
                         direction: column.sortable
@@ -766,16 +755,16 @@
 
         _getFilter() {
             let filters = [];
-            let columns = this._columns;
+            let columns = this.columns;
             for (let property in columns) {
-                let column = this._columns[property];
-                /*if (column.searchBar) {
+                let column = this.columns[property];
+                if (column.hasAttribute('search-bar')) {
                     let filter = column.getFilter();
                     if (filter) {
                         filter.column = property;
                         filters.push(filter);
                     }
-                }*/
+                }
             }
             return filters;
         }
@@ -817,20 +806,20 @@
         }
 
         showFilter() {
-            for (let column of this._columns) {
-                column.showFilter();
+            for (let property in this.columns) {
+                this.columns[property].showFilter();
             }
         }
 
         hideFilter() {
-            for (let column of this._columns) {
-                column.hideFilter();
+            for (let property in this.columns) {
+                this.columns[property].hideFilter();
             }
         }
 
         toggleFilter() {
-            for (let column of this._columns) {
-                column.toggleFilter();
+            for (let property in this.columns) {
+                this.columns[property].toggleFilter();
             }
         }
 

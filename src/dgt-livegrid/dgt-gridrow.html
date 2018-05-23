@@ -128,9 +128,9 @@
             if(this._columns && this._columns.checkbox){
                 let checkbox = this.children[0].children[0];
                 if(!this.disabled) {
-                    checkbox.removeAttribute("disabled");
+                    checkbox.removeAttribute('disabled');
                 }else {
-                    checkbox.setAttribute("disabled", '');
+                    checkbox.setAttribute('disabled', '');
                 }
                 this.fire('disabledRow', {
                     index: this.index,
