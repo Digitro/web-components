@@ -443,6 +443,11 @@
             grid7.load();
         });
     </script>
-
+    <script>
+        if (!window.HTMLImports) {
+            document.dispatchEvent(
+                new CustomEvent('WebComponentsReady', {bubbles: true}));
+        }
+    </script>
 </body>
 </html>
