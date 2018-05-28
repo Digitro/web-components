@@ -9,7 +9,6 @@
         :host {
             display: table-row;
         }
-
     </style>
 
     <slot></slot>
@@ -116,10 +115,14 @@
         }
 
         set value(userObject){
-            let parent = this;
-            while(parent.firstChild){
+
+            /*while(parent.firstChild){
                 parent.removeChild(parent.firstChild);
+            }*/
+            for(let cell of this.querySelectorAll('dgt-gridcell')){
+               cell.remove();
             }
+            this.__validRender = false;
             this._render(userObject, this._columns);
             this._value = userObject;
         }
@@ -168,3 +171,4 @@
 
     DGTElement.registerElement('dgt-gridrow', DGTGridRow);
 </script>
+

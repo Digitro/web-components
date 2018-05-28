@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>DGT Livegrid</title>
-    <script src="../../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
-    <link rel="import" href="dgt-livegrid.html">
+
+    <script src="../../bower_components/webcomponentsjs/webcomponents-hi-sd-ce.js"></script>
+
+
+    <link rel="import" href="dgt-livegrid.html?v=1">
 
     <style>
         dgt-livegrid{
@@ -65,12 +68,15 @@
                 "</span>";
         }
     };
-    document.addEventListener('WebComponentsReady', function(){
-        console.log('todos os componentes estão prontos!!!');
-    });
 </script>
 
   <dgt-livegrid id="grid-1">
+      <div slot="spinner">
+          <h1>Loading...</h1>
+      </div>
+      <div slot="message">
+          <h1>Nothing to show man!!!</h1>
+      </div>
       <dgt-gridcolumns slot="dgt-gridcolumns">
           <dgt-gridcolumn hideable name="frequency" style="width: 20%" title="Frequency">Frequency(MHz)</dgt-gridcolumn>
           <dgt-gridcolumn hidden hideable name="board" style="width: 30%">Board</dgt-gridcolumn>
@@ -105,6 +111,12 @@
             <button id="append-btn-1">Append data</button>
             <button id="clear-btn-1">Clear data</button>
         </div>
+        <div slot="spinner">
+            <h1>Loading...</h1>
+        </div>
+        <div slot="message">
+            <h1>Nothing to show man!!!</h1>
+        </div>
         <dgt-gridcolumns slot="dgt-gridcolumns">
             <dgt-gridcolumn name="index" style="width:10%">Index</dgt-gridcolumn>
             <dgt-gridcolumn name="timestamp">Date</dgt-gridcolumn>
@@ -112,8 +124,6 @@
             <dgt-gridcolumn name="actions" style="width:10%">Actions</dgt-gridcolumn>
         </dgt-gridcolumns>
     </dgt-livegrid>
-
-
 
     <script>
         document.addEventListener('WebComponentsReady', function() {
@@ -158,7 +168,116 @@
     </script>
 
 
- <dgt-livegrid id="grid-2" selectable="multiple" pin-last-column></dgt-livegrid>
+
+    <dgt-livegrid id="livegrid-2" selectable>
+        <div slot="dgt-gridheader">
+            <button id="reload-btn-2" class="btn btn-sm btn-primary">Reload data</button>
+        </div>
+        <dgt-gridcolumns slot="dgt-gridcolumns">
+            <dgt-gridcolumn name="index" style="width:10%">Index</dgt-gridcolumn>
+            <dgt-gridcolumn name="timestamp">Date</dgt-gridcolumn>
+            <dgt-gridcolumn name="seed.first">First Seed</dgt-gridcolumn>
+            <dgt-gridcolumn name="seed.second">Second Seed</dgt-gridcolumn>
+            <dgt-gridcolumn name="actions" style="width:10%" >Actions</dgt-gridcolumn>
+        </dgt-gridcolumns>
+        <div slot="spinner">
+            <h1>Loading...</h1>
+        </div>
+        <div slot="message">
+            <h1>Nothing to show man!!!</h1>
+        </div>
+    </dgt-livegrid>
+
+    <div class="card mar-top pad-all">
+        <h2>Clicked item</h2>
+        <div class="row">
+            <label for="id-btn-2">Index</label>
+            <input id="id-btn-2" type="text" disabled />
+            <label for="timestamp-btn-2">Timestamp</label>
+            <input id="timestamp-btn-2" type="text" disabled />
+            <label for="seed1-btn-2">First Seed</label>
+            <input id="seed1-btn-2" type="text" />
+            <label for="seed2-btn-2">Second Seed</label>
+            <input id="seed2-btn-2" type="text" />
+        </div>
+        <button id="update-btn-2" class="btn btn-primary" disabled>Update item</button>
+    </div>
+
+    <script>
+        document.addEventListener('WebComponentsReady', function(){
+            var grid2 = document.querySelector("#livegrid-2");
+
+            grid2.columns["timestamp"].setRenderer(timestampRenderer);
+
+            grid2.setGridLoadProxy(function(gridRequest, successCallback, errorCallback){
+                var index = gridRequest.index;
+                var numElements = gridRequest.count;
+                var elements = [];
+                for (var i = 0; i < numElements; i++){
+                    elements.push(database[index + i]);
+                }
+                setTimeout( function(){ successCallback(elements);}, 50);
+            });
+
+            document.querySelector("#reload-btn-2").addEventListener('click', function(){
+                grid2.reload();
+                document.querySelector("#id-btn-2").value = '';
+                document.querySelector("#timestamp-btn-2").value = '';
+                document.querySelector("#seed1-btn-2").value = '';
+                document.querySelector("#seed2-btn-2").value = '';
+                document.querySelector("#update-btn-2").disabled = true;
+            });
+
+            var gIndex;
+            var gUserObject = null;
+            grid2.addEventListener('clickRow', function(ev){
+                var eventObject = ev.detail;
+                gIndex = eventObject.index;
+                gUserObject = eventObject.value;
+                document.querySelector("#id-btn-2").value = gUserObject.index;
+                document.querySelector("#timestamp-btn-2").value = gUserObject.timestamp;
+                document.querySelector("#seed1-btn-2").value = gUserObject.seed.first;
+                document.querySelector("#seed2-btn-2").value = gUserObject.seed.second;
+                document.querySelector("#update-btn-2").disabled = false;
+            });
+
+            document.querySelector("#update-btn-2").addEventListener('click', function(){
+                if (gUserObject){
+                    gUserObject.seed.first = document.querySelector("#seed1-btn-2").value;
+                    gUserObject.seed.second = document.querySelector("#seed2-btn-2").value;
+                    grid2.updateValue(gIndex, gUserObject);
+                }
+            });
+
+
+            var actionsRenderer = function(element, userObject){
+                var btnIcon = document.createElement('i');
+
+                var btn = document.createElement('button');
+                btn.setAttribute('click-event', 'removeDataSample');
+                btn.innerHTML = 'Delete';
+                element.appendChild(btn);
+            };
+            grid2.columns["actions"].setRenderer(actionsRenderer);
+
+            grid2.addEventListener('removeDataSample', function(e){
+                var row = e.detail.row;
+                grid2.removeValues(row.index);
+            });
+
+            grid2.load();
+        });
+
+    </script>
+
+ <dgt-livegrid id="grid-2" selectable="multiple" pin-last-column>
+     <div slot="spinner">
+         <h1>Loading...</h1>
+     </div>
+     <div slot="message">
+         <h1>Nothing to show man!!!</h1>
+     </div>
+ </dgt-livegrid>
 
   <script>
       document.addEventListener('WebComponentsReady', function() {
@@ -250,6 +369,12 @@
             <dgt-gridcolumn name="seed.first" >First Seed</dgt-gridcolumn>
             <dgt-gridcolumn name="actions" style="width:100px">Actions</dgt-gridcolumn>
         </dgt-gridcolumns>
+        <div slot="spinner">
+            <h1>Loading...</h1>
+        </div>
+        <div slot="message">
+            <h1>Nothing to show man!!!</h1>
+        </div>
     </dgt-livegrid>
 
     <script>
@@ -355,6 +480,12 @@
             <dgt-gridcolumn name="seed.first">First Seed</dgt-gridcolumn>
             <dgt-gridcolumn name="actions" style="width:100px">Actions</dgt-gridcolumn>
         </dgt-gridcolumns>
+        <div slot="spinner">
+            <h1>Loading...</h1>
+        </div>
+        <div slot="message">
+            <h1>Nothing to show man!!!</h1>
+        </div>
     </dgt-livegrid>
 
 
@@ -442,12 +573,6 @@
 
             grid7.load();
         });
-    </script>
-    <script>
-        if (!window.HTMLImports) {
-            document.dispatchEvent(
-                new CustomEvent('WebComponentsReady', {bubbles: true}));
-        }
     </script>
 </body>
 </html>

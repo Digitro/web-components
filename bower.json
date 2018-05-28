@@ -5,6 +5,7 @@
     "web-component-tester": "web-component-tester#^6.0.0"
   },
   "dependencies": {
-    "webcomponentsjs": "webcomponents/webcomponentsjs#^2.0.0"
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^1.2.0",
+    "mustache.js": "mustache#^2.3.0"
   }
 }

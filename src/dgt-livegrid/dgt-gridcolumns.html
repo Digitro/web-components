@@ -19,6 +19,7 @@
             this.columns = columns;
         }
         connectedCallback(){
+            super.connectedCallback();
             for(let column of this.columns){
                 let gridColumn = new DGTGridColumn(column);
                 gridColumn.innerHTML = column.label;
@@ -36,3 +37,4 @@
     }
     DGTElement.registerElement('dgt-gridcolumns', DGTGridColumns);
 </script>
+

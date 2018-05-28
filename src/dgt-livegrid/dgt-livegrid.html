@@ -7,9 +7,6 @@
         dgt-livegrid {
             display: block;
         }
-        :host {
-            display: block;
-        }
         .scroll-container {
             height: var(--dgt-livegrid-height, auto);
             overflow: auto;
@@ -21,9 +18,26 @@
             overflow-x: hidden;
             overflow-y: auto;
         }
+        :host {
+            display: block;
+        }
         :host([block-text-selection]){
             user-select: none;
         }
+        ::slotted([slot=spinner][hidden]){
+            display: none;
+        }
+        ::slotted([slot=spinner][hidden]){
+            display: none;
+        }
+
+        ::slotted([slot=spinner]:not([hidden])){
+            display: block;
+        }
+        ::slotted([slot=spinner]:not([hidden])){
+            display: block;
+        }
+
     </style>
 
     <slot name="dgt-gridheader"></slot>
@@ -70,7 +84,6 @@
         }
 
         connectedCallback() {
-            super.connectedCallback();
             this.lastScrollTopPosition = 0;
             this._requesting = false;
             this.resetVariables();
@@ -80,8 +93,9 @@
             this._size = 5 * Math.ceil(this.clientHeight / 35);
             this._hideHiddenColumns();
             this.listen('gridColumnsReady', function(e) {
+
                 this.gridColumns = e.target;
-                this._createDropDownHiddenColumns();
+                //this._createDropDownHiddenColumns();
                 this.gridColumns.addEventListener('gridSelectAllChange', this.handleSelectAllChange.bind(this));
                 this._setDraggable();
 
@@ -261,7 +275,7 @@
         }
 
         _createDropDownHiddenColumns() {
-            return;
+           /* return;
             if (!this.hideColumns) {
                 return;
             }
@@ -286,7 +300,7 @@
                 label.innerHTML += column.label;
                 this.dropdownHideColumns.appendChild(label);
             }
-            this.dropdownHideColumns.addEventListener('click', this._handleHideColumns.bind(this));
+            this.dropdownHideColumns.addEventListener('click', this._handleHideColumns.bind(this));*/
         }
 
         _handleHideColumns(e) {
@@ -377,7 +391,18 @@
             this.gridRows.innerHTML = '';
             this.fakeScrollTop.removeAttribute('style');
             this.fakeScrollBottom.removeAttribute('style');
-            //this.messageContainer.classList.add('hidden');
+            this.messageContainer.setAttribute('hidden', '');
+        }
+
+        getRow(index){
+            for (let page of this._pages){
+                let rows = page.domElements;
+                for (let row of rows){
+                    if(row.index == index){
+                        return row;
+                    }
+                }
+            }
         }
 
         get rows() {
@@ -425,7 +450,7 @@
         load() {
             if (this.gridLoadMethod) {
                 this._requesting = true;
-//                this.spinnerContainer.classList.remove('hidden');
+                this.spinnerContainer.removeAttribute('hidden');
                 this.gridLoadMethod(this._getGridRequest(), this._requestSuccess.bind(this), this._requestError.bind(this));
             }
         }
@@ -454,7 +479,7 @@
             for (let page of this._pages) {
                 let rows = page.domElements;
                 for (let j = 0; j < rows.length; j++) {
-                    if (rows[j].index == index) {
+                    if (rows[j].index === index) {
                         //deletando do cache
                         let rowToDelete = rows[j];
                         page.height -= rowToDelete.offsetHeight;
@@ -472,7 +497,7 @@
         }
 
         updateValue(index, userObject) {
-            let row = this.rows[index];
+            let row = this.getRow(index);
             if (row) row.value = userObject;
         }
 
@@ -492,8 +517,6 @@
                 this.gridRows.setAttribute('slot', 'dgt-gridrows');
                 this.appendChild(this.gridRows);
             }
-            this.messageContainer = this.querySelector('[slot=message]');
-            this.spinnerContainer = this.querySelector('[slot=spinner]');
             this.fakeScrollTop = this.gridRows.$.querySelector('.fake-scroll-top');
             this.fakeScrollBottom = this.gridRows.$.querySelector('.fake-scroll-bottom');
         }
@@ -522,13 +545,13 @@
 
         _requestSuccess(userObjects, count) {
             this._requesting = false;
-           // this.spinnerContainer.classList.add('hidden');
+            this.spinnerContainer.setAttribute('hidden', '');
             this._count = count || this._count;
             if (userObjects.length > 0) {
                 this._addValues(userObjects);
             } else {
                 if (this._index === 0) {
-                    this.messageContainer.classList.remove('hidden');
+                    this.messageContainer.removeAttribute('hidden');
                 }
                 //Scroll returns one pixel to prevent request looping
                 this.scrollContainer.scrollTop = this.scrollContainer.scrollTop - 1;
@@ -546,6 +569,14 @@
             this.gridRows.listen('selectRow', this._handleSelectedRow.bind(this));
             this.gridRows.listen('deselectRow', this._handleDeselectRow.bind(this));
             this.scrollContainer.addEventListener('scroll', this._handleBodyScroll.bind(this));
+            this.$.querySelector('[name=spinner]').addEventListener('slotchange', ()=>{
+                this.spinnerContainer = this.querySelector('[slot=spinner]');
+                this.spinnerContainer.setAttribute('hidden', '');
+            })
+            this.$.querySelector('[name=message]').addEventListener('slotchange', ()=>{
+                this.messageContainer = this.querySelector('[slot=message]');
+                this.messageContainer.setAttribute('hidden', '');
+            });
         }
 
         _handleBodyScroll() {

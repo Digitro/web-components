@@ -17,6 +17,105 @@
             padding: 5px;
         }
 
+        dgt-gridcolumn[hidden=true] {
+            display: none;
+        }
+
+        dgt-gridcolumn .checkbox {
+            display: none;
+        }
+
+        dgt-gridcolumn[is-checkbox] .checkbox {
+            display: block;
+        }
+
+        dgt-gridcolumn .checkbox:before {
+            border: 1px solid #000;
+            width: 14px;
+            height: 14px;
+            display: block;
+            content: '';
+            color: #000;
+        }
+
+        dgt-gridcolumn .checkbox[checked]:before {
+            content: "\1806";
+        }
+
+        dgt-gridcolumn .checkbox[all-checked]:before {
+            content: "\2713";
+        }
+
+        dgt-gridcolumn .resizable-area {
+            display: none;
+        }
+
+        dgt-gridcolumn[resizable=true] .resizable-area {
+            display: block;
+        }
+
+        dgt-gridcolumn:hover .resizable-area,
+        dgt-gridcolumn:active .resizable-area {
+            cursor: col-resize;
+            width: 5px;
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background: #92d0ff;
+        }
+
+        dgt-gridcolumn[is-checkbox] .search-input {
+            display: none;
+        }
+
+        dgt-gridcolumn .filter-container {
+            display: none;
+        }
+
+        dgt-gridcolumn[search-bar][show-search-bar] .filter-container {
+            display: block;
+        }
+
+        dgt-gridcolumn .search-input {
+            width: 100%;
+        }
+
+        dgt-gridcolumn[sortable] .label {
+            position: relative;
+            cursor: pointer;
+        }
+
+        dgt-gridcolumn[sortable] .label:before,
+        dgt-gridcolumn[sortable] .label:after {
+            font-size: .6em;
+            position: absolute;
+            right: 0;
+        }
+
+        dgt-gridcolumn[sortable] .label:before {
+            top: -2px;
+            content: '\25B4';
+        }
+
+        dgt-gridcolumn[sortable] .label:after {
+            bottom: 2px;
+            content: '\25BE';
+        }
+
+        dgt-gridcolumn[sortable=desc] .label:before,
+        dgt-gridcolumn[sortable=asc] .label:after {
+            display: none;
+        }
+
+        dgt-gridcolumn[sortable=desc] .label:after {
+            bottom: 6px;
+        }
+
+        dgt-gridcolumn[sortable=asc] .label:before {
+            top: 0px;
+        }
+
         :host {
             display: table-cell;
             position: sticky;
@@ -196,6 +295,7 @@
 
         connectedCallback() {
             this._createDomReference();
+
             if (typeof this.sortable === 'string' && this.labelWrapper) {
                 this.labelWrapper.setAttribute('sortable', '');
             }

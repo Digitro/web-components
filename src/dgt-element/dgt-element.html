@@ -69,15 +69,14 @@
             }
             instance.__initialValues = attribValuesToSet;
         }
-
+        let teste = '.scroll-container';
         class DGTElement extends HTMLElement {
             constructor() {
                 super();
                 this.template = DGT_ELEMENTS_TEMPLATES.get(this.tagName);
-                this.$ = this;
-                if (!window.ShadyDOM) {
-                    this.$ = this.attachShadow({mode: 'closed'});
-                }
+
+                this.$ = this.attachShadow({mode: 'closed'});
+
                 const instance = this.template.content.cloneNode(true);
                 this.$.appendChild(instance);
                 if (this.constructor.properties) {
@@ -122,7 +121,7 @@
                 this.addEventListener(eventName, fn);
             }
             static registerElement(componentId, componentClass) {
-                let query = '[href*=' + componentId + '] template';
+                let query = '[href*="' + componentId + '.html"] > template';
                 if (!window.ShadyDOM) {
                     query = 'template';
                 }
