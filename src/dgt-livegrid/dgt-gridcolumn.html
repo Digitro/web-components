@@ -23,10 +23,11 @@
 
         dgt-gridcolumn .checkbox {
             display: none;
+            outline: 0;
         }
 
         dgt-gridcolumn[is-checkbox] .checkbox {
-            display: block;
+            display: inline-block;
         }
 
         dgt-gridcolumn .checkbox:before {
@@ -129,10 +130,11 @@
 
         :host .checkbox {
             display: none;
+            outline: 0;
         }
 
         :host([is-checkbox]) .checkbox {
-            display: block;
+            display: inline-block;
         }
 
         :host .checkbox:before {
@@ -294,8 +296,8 @@
         }
 
         connectedCallback() {
+            super.connectedCallback();
             this._createDomReference();
-
             if (typeof this.sortable === 'string' && this.labelWrapper) {
                 this.labelWrapper.setAttribute('sortable', '');
             }
