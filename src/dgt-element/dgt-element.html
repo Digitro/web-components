@@ -1,4 +1,3 @@
-
 <script>
     (function(window) {
         const DGT_ELEMENTS_TEMPLATES = new Map();
@@ -69,14 +68,12 @@
             }
             instance.__initialValues = attribValuesToSet;
         }
-        let teste = '.scroll-container';
+
         class DGTElement extends HTMLElement {
             constructor() {
                 super();
                 this.template = DGT_ELEMENTS_TEMPLATES.get(this.tagName);
-
                 this.$ = this.attachShadow({mode: 'closed'});
-
                 const instance = this.template.content.cloneNode(true);
                 this.$.appendChild(instance);
                 if (this.constructor.properties) {
