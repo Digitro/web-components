@@ -114,13 +114,9 @@
             return this._value;
         }
 
-        set value(userObject){
-
-            /*while(parent.firstChild){
-                parent.removeChild(parent.firstChild);
-            }*/
-            for(let cell of this.querySelectorAll('dgt-gridcell')){
-               cell.remove();
+        set value(userObject) {
+            for (let cell of this.querySelectorAll('dgt-gridcell')) {
+                cell.remove();
             }
             this.__validRender = false;
             this._render(userObject, this._columns);

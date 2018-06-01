@@ -7,6 +7,9 @@
         dgt-livegrid {
             display: block;
         }
+        .grid-area{
+            display: flex;
+        }
         .scroll-container {
             height: var(--dgt-livegrid-height, auto);
             overflow: auto;
@@ -17,6 +20,17 @@
             width: 100%;
             overflow-x: hidden;
             overflow-y: auto;
+        }
+        .hide-columns-menu{
+           display: none;
+           flex: 0 0 10%;
+           overflow: auto;
+        }
+        .hide-columns-menu[visible]{
+            display: block;
+        }
+        .hide-columns-menu label{
+            display: block;
         }
         :host {
             display: block;
@@ -41,13 +55,16 @@
     </style>
 
     <slot name="dgt-gridheader"></slot>
-    <div class="scroll-container">
-        <div class="data-container">
-            <slot name="dgt-gridcolumns"></slot>
-            <slot name="dgt-gridrows"></slot>
+    <div class="grid-area">
+        <div class="scroll-container">
+            <div class="data-container">
+                <slot name="dgt-gridcolumns"></slot>
+                <slot name="dgt-gridrows"></slot>
+            </div>
+            <slot name="spinner"></slot>
+            <slot name="message"></slot>
         </div>
-        <slot name="spinner"></slot>
-        <slot name="message"></slot>
+        <div class="hide-columns-menu"></div>
     </div>
     <slot name="dgt-gridfooter"></slot>
 
@@ -56,7 +73,6 @@
     class DGTLivegrid extends DGTElement {
         constructor() {
             super();
-            this._columns = {};
         }
 
         static properties() {
@@ -91,21 +107,8 @@
             this.createPagesFromStaticData();
             this._addEventListeners();
             this._size = 5 * Math.ceil(this.clientHeight / 35);
-            this._hideHiddenColumns();
-            this.listen('gridColumnsReady', function(e) {
-
-                this.gridColumns = e.target;
-                //this._createDropDownHiddenColumns();
-                this.gridColumns.addEventListener('gridSelectAllChange', this.handleSelectAllChange.bind(this));
-                this._setDraggable();
-
-                if(this.selectable === 'multiple'){
-                    this.columns['checkbox'] = this.gridColumns.createCheckboxColumn('checkbox');
-                }
-
-            }.bind(this));
-
-            this.listen('gridColumnReady', this._setColumn.bind(this));
+            this._createHideColumnsMenu();
+            //this._hideHiddenColumns();
         }
 
         _setDraggable() {
@@ -127,7 +130,7 @@
 
         _getTargetColumn(e) {
             let target = e.target;
-            while (target != null && target.tagName != 'DGT-GRIDCOLUMN') {
+            while (target !== null && target.tagName !== 'DGT-GRIDCOLUMN') {
                 target = target.parentElement;
             }
             return target;
@@ -161,9 +164,9 @@
             let target = this._getTargetColumn(e);
             let content = this.column.content;
             let movingColumnToTheRight = e.clientX > this.column.oldClientX;
-
+            let lastColumn = this.gridColumns.querySelector('dgt-gridcolumn:last-child');
             let forbiddenDst = (target === content) || (target.tagName === 'SPAN') || target.hasAttribute('is-checkbox') || !target.hasAttribute('draggable')
-                || (movingColumnToTheRight && target.nextSibling && target.nextSibling.tagName !== 'DGT-GRIDCOLUMN' && this.hasAttribute('pin-last-column'));
+                || (movingColumnToTheRight && target === lastColumn && this.hasAttribute('pin-last-column'));
 
             if (forbiddenDst) {
                 return;
@@ -182,41 +185,20 @@
             }
 
             this._updateCellsSequence(e.clientX, this.column, destIndex);
-            this._updateColumnsSequence();
             this.removeAttribute('block-text-selection');
         }
 
         _updateCellsSequence(currentClientX, column, destIndex) {
             for (let page of this._pages) {
                 for (let row of page.domElements) {
-                    let cell = row.querySelector('dgt-gridcell:nth-child(' + column.index + ')');
-                    let cellDest = row.querySelector('dgt-gridcell:nth-child(' + destIndex + ')');
+                    let cell = row.querySelector('dgt-gridcell:nth-of-type(' + column.index + ')');
+                    let cellDest = row.querySelector('dgt-gridcell:nth-of-type(' + destIndex + ')');
                     let targetCell = cellDest.nextSibling;
                     if (currentClientX < column.oldClientX) {
                         targetCell = cellDest;
                     }
                     row.insertBefore(cell, targetCell);
                 }
-            }
-        }
-
-        _updateColumnsSequence() {
-            let columnsElements = this.querySelectorAll('dgt-gridcolumn');
-            let newColumnsSequence = {};
-            for (let element of columnsElements) {
-                let key = element.name;
-                newColumnsSequence[key] = this._columns[key];
-            }
-            this._columns = newColumnsSequence;
-        }
-
-        _setColumn(e) {
-            const column = e.target;
-            column.listen('sorted', this._handleSortChange.bind(this));
-            column.listen('filtered', this.reload.bind(this));
-            this._columns[column.name] = column;
-            if (column.isCheckbox) {
-                this._updateColumnsSequence();
             }
         }
 
@@ -241,8 +223,8 @@
         }
 
         updateCheckboxStatus() {
-            if (this.selectable === 'multiple' && this._columns['checkbox']) {
-                let column = this._columns['checkbox'];
+            if (this.selectable === 'multiple' && this.columns['checkbox']) {
+                let column = this.columns['checkbox'];
                 let status = this._selectedRows === 0 ? column.checkboxStatus.NONE_CHECKED :
                     this._selectedRows === this._index ? column.checkboxStatus.ALL_CHECKED : column.checkboxStatus.MULTIPLE_CHECKED;
                 column.setCheckboxStatus(status);
@@ -274,33 +256,33 @@
             return Array.prototype.indexOf.call(element.parentElement.children, element);
         }
 
-        _createDropDownHiddenColumns() {
-           /* return;
-            if (!this.hideColumns) {
+        _createHideColumnsMenu() {
+            if (!this.hasAttribute('hide-columns')) {
                 return;
             }
-            this.dropdownHideColumns = this.$$('#' + this.idDropdownHideColumns);
-            let columns = this.dataContainer.querySelectorAll('dgt-gridcolumn');
-            for (let column of columns) {
-                if (!column.hideable) {
-                    continue;
+            setTimeout(() =>{
+                let columns = this.gridColumns.querySelectorAll('dgt-gridcolumn');
+                for(let column of columns) {
+                    if (!column.hasAttribute('hideable')) {
+                        continue;
+                    }
+                    let columnWidth = (column.offsetWidth !== 0) ? column.offsetWidth : 200;
+                    column.style.width = columnWidth + 'px';
+                    let label = document.createElement('label');
+                    let input = document.createElement('input');
+                    label.setAttribute('for', column.name);
+                    input.type = 'checkbox';
+                    input.name = column.name;
+                    input.id = column.name;
+                    input.value = column.name;
+                    if (!column.hasAttribute('hidden')) {
+                        input.setAttribute('checked', '');
+                    }
+                    label.appendChild(input);
+                    label.innerHTML += column.innerHTML;
+                    this.hideColumnsMenuDiv.appendChild(label);
                 }
-                let columnWidth = (column.offsetWidth !== 0) ? column.offsetWidth : 200;
-                column.style.width = columnWidth + 'px';
-                let label = document.createElement('label');
-                let input = document.createElement('input');
-                label.setAttribute('class', 'menu-item');
-                input.type = 'checkbox';
-                input.name = column.name;
-                input.value = column.name;
-                if (!column.hidden) {
-                    input.setAttribute('checked', '');
-                }
-                label.appendChild(input);
-                label.innerHTML += column.label;
-                this.dropdownHideColumns.appendChild(label);
-            }
-            this.dropdownHideColumns.addEventListener('click', this._handleHideColumns.bind(this));*/
+            }, 0);
         }
 
         _handleHideColumns(e) {
@@ -322,15 +304,15 @@
 
         __updateHiddenCellsFromColumn(column) {
             let columnIndex = this._getElementDomIndex(column) + 1;
-            let cells = this.querySelectorAll('dgt-gridcell:nth-child(' + columnIndex + ')');
-            let display = column.hidden ? 'none' : 'table-cell';
+            let cells = this.querySelectorAll('dgt-gridcell:nth-of-type(' + columnIndex + ')');
+            let display = column.hasAttribute('hidden') ? 'none' : 'table-cell';
             this._displayCells(cells, display);
         }
 
         _hideHiddenColumns() {
-            let columns = this.dataContainer.querySelectorAll('dgt-gridcolumn');
+            let columns = this.gridColumns.querySelectorAll('dgt-gridcolumn');
             for (let column of columns) {
-                if (!column.hideable && !column.hidden) {
+                if (!column.hasAttribute('hideable') && !column.hasAttribute('hidden')) {
                     continue;
                 }
                 this.__updateHiddenCellsFromColumn(column);
@@ -391,7 +373,9 @@
             this.gridRows.innerHTML = '';
             this.fakeScrollTop.removeAttribute('style');
             this.fakeScrollBottom.removeAttribute('style');
-            this.messageContainer.setAttribute('hidden', '');
+            if(this.messageContainer){
+                this.messageContainer.setAttribute('hidden', '');
+            }
         }
 
         getRow(index){
@@ -507,7 +491,6 @@
 
         _createDomReferences() {
             this.header = this.$.querySelector('.header');
-            this.dropdownHideColumns = this.$.querySelector('.dropdown-columns');
             this.dataContainer = this.$.querySelector('.data-container');
             this.scrollContainer = this.$.querySelector('.scroll-container');
             this.gridColumns = this.querySelector('[slot=dgt-gridcolumns]');
@@ -519,6 +502,7 @@
             }
             this.fakeScrollTop = this.gridRows.$.querySelector('.fake-scroll-top');
             this.fakeScrollBottom = this.gridRows.$.querySelector('.fake-scroll-bottom');
+            this.hideColumnsMenuDiv = this.$.querySelector('.hide-columns-menu');
         }
 
         _handleSortChange(event) {
@@ -569,14 +553,30 @@
             this.gridRows.listen('selectRow', this._handleSelectedRow.bind(this));
             this.gridRows.listen('deselectRow', this._handleDeselectRow.bind(this));
             this.scrollContainer.addEventListener('scroll', this._handleBodyScroll.bind(this));
-            this.$.querySelector('[name=spinner]').addEventListener('slotchange', ()=>{
-                this.spinnerContainer = this.querySelector('[slot=spinner]');
-                this.spinnerContainer.setAttribute('hidden', '');
-            })
-            this.$.querySelector('[name=message]').addEventListener('slotchange', ()=>{
-                this.messageContainer = this.querySelector('[slot=message]');
-                this.messageContainer.setAttribute('hidden', '');
-            });
+            this.$.querySelector('[name=spinner]').addEventListener('slotchange', this._handleSpinnerSlotChange.bind(this));
+            this.$.querySelector('[name=message]').addEventListener('slotchange', this._handleMessageSlotChange.bind(this));
+            this.listen('gridColumnsReady', this._handleGridColumnsReady.bind(this));
+            this.listen('sorted', this._handleSortChange.bind(this));
+            this.listen('filtered', this.reload.bind(this));
+            this.hideColumnsMenuDiv.addEventListener('click', this._handleHideColumns.bind(this));
+        }
+
+        _handleSpinnerSlotChange(){
+            this.spinnerContainer = this.querySelector('[slot=spinner]');
+            this.spinnerContainer.setAttribute('hidden', '');
+        }
+        _handleMessageSlotChange(){
+            this.messageContainer = this.querySelector('[slot=message]');
+            this.messageContainer.setAttribute('hidden', '');
+        }
+
+        _handleGridColumnsReady(e){
+            this.gridColumns = e.target;
+            this.gridColumns.addEventListener('gridSelectAllChange', this.handleSelectAllChange.bind(this));
+            this._setDraggable();
+            if(this.selectable === 'multiple'){
+                this.columns['checkbox'] = this.gridColumns.createCheckboxColumn('checkbox');
+            }
         }
 
         _handleBodyScroll() {
@@ -633,7 +633,7 @@
 
         _handleDblClick(e) {
             let target = e.target;
-            while (target != null && target.tagName != 'DGT-LIVEGRID') {
+            while (target !== null && target.tagName !== 'DGT-LIVEGRID') {
                 if (e.cancelBubble) {
                     return;
                 }
@@ -652,7 +652,7 @@
         _handleClick(e) {
             let target = e.target;
             let activeElement = target.$ ? target.$.activeElement : null;
-            while (target != null && target.tagName != 'DGT-LIVEGRID') {
+            while (target !== null && target.tagName !== 'DGT-LIVEGRID') {
                 if (e.cancelBubble) {
                     return;
                 }
@@ -672,8 +672,8 @@
         }
 
         _getRowElement(target) {
-            while (target != null) {
-                if (target.tagName == 'DGT-GRIDROW') {
+            while (target !== null) {
+                if (target.tagName === 'DGT-GRIDROW') {
                     return target;
                 }
                 target = target.parentElement;
@@ -689,7 +689,7 @@
 
             //console.log('distance', distance, 'scrollPosition', scrollPosition, 'start', start, 'end', end);
 
-            if (start != this._start || end != this._end) {
+            if (start !== this._start || end !== this._end) {
                 this._showPages(start, end);
                 this._start = start;
                 this._end = end;
@@ -774,7 +774,7 @@
             let columns = this.columns;
             for (let property in columns) {
                 let column = this.columns[property];
-                if (column.hasAttribute('sortable') && column.sortable != '') {
+                if (column.hasAttribute('sortable') && column.sortable !== '') {
                     sortOrder.push({
                         column: property,
                         direction: column.sortable
@@ -847,11 +847,25 @@
                 this.columns[property].hideFilter();
             }
         }
-
         toggleFilter() {
             for (let property in this.columns) {
                 this.columns[property].toggleFilter();
             }
+        }
+
+        toggleColumnsMenu() {
+            if (this.hideColumnsMenuDiv.hasAttribute('visible')) {
+                this.hideColumnsMenuDiv.removeAttribute('visible');
+                return;
+            }
+            this.hideColumnsMenuDiv.setAttribute('visible', '');
+        }
+
+        showColumnsMenu() {
+            this.hideColumnsMenuDiv.setAttribute('visible', '');
+        }
+        hideColumnsMenu() {
+            this.hideColumnsMenuDiv.removeAttribute('visible');
         }
 
         get count() {

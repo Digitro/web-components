@@ -8,17 +8,13 @@
             z-index: 10;
         }
 
-        dgt-gridcolumn[hidden=true] {
+        dgt-gridcolumn[hidden] {
             display: none;
         }
 
         dgt-gridcolumn .checkbox {
             border: 1px solid #000;
             padding: 5px;
-        }
-
-        dgt-gridcolumn[hidden=true] {
-            display: none;
         }
 
         dgt-gridcolumn .checkbox {
@@ -124,7 +120,7 @@
             z-index: 10;
         }
 
-        :host([hidden=true]) {
+        :host([hidden]) {
             display: none;
         }
 
@@ -296,6 +292,9 @@
         }
 
         connectedCallback() {
+            if(this.rendered){
+                return;
+            }
             super.connectedCallback();
             this._createDomReference();
             if (typeof this.sortable === 'string' && this.labelWrapper) {
@@ -311,7 +310,9 @@
             if (this.resizable) {
                 this.resizableArea.addEventListener('mousedown', this._resizeColumn.bind(this));
             }
-            this.fire('gridColumnReady');
+            this.fire('gridColumnReady', this);
+
+            this.rendered = true;
         }
 
 
@@ -330,15 +331,15 @@
             this.checkbox.checked = status;
 
             switch (status) {
-                case this.checkboxStatus.ALL_CHECKED:
-                    this.checkbox.setAttribute('all-checked', '');
+            case this.checkboxStatus.ALL_CHECKED:
+                this.checkbox.setAttribute('all-checked', '');
                 break;
-                case this.checkboxStatus.NONE_CHECKED:
-                    this.checkbox.removeAttribute('checked');
-                    this.checkbox.removeAttribute('all-checked');
+            case this.checkboxStatus.NONE_CHECKED:
+                this.checkbox.removeAttribute('checked');
+                this.checkbox.removeAttribute('all-checked');
                 break;
-                case this.checkboxStatus.MULTIPLE_CHECKED:
-                    this.checkbox.setAttribute('checked', '');
+            case this.checkboxStatus.MULTIPLE_CHECKED:
+                this.checkbox.setAttribute('checked', '');
                 break;
             }
         }
@@ -409,7 +410,6 @@
             });
             element.innerHTML = '';
             element.appendChild(checkboxTemplate);
-
         }
 
         setRenderer(renderer) {

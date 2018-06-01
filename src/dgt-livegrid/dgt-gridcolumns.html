@@ -19,7 +19,8 @@
         }
         connectedCallback(){
             super.connectedCallback();
-            for(let column of this.columns){
+            for(let property in this.columns){
+                let column = this.columns[property];
                 let gridColumn = new DGTGridColumn(column);
                 gridColumn.innerHTML = column.label;
                 this.appendChild(gridColumn);

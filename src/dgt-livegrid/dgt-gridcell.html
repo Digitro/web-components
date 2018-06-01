@@ -58,12 +58,16 @@
             super();
         }
         connectedCallback(){
+            if(this.rendered){
+                return;
+            }
             let checkbox = this.querySelector('[slot=checkbox]');
             if(checkbox && this.parentElement.hasAttribute('selected')){
                 checkbox.setAttribute('checked', '');
             }else if(checkbox){
                 checkbox.removeAttribute('checked');
             }
+            this.rendered = true;
         }
     }
     DGTElement.registerElement('dgt-gridcell', DGTGridCell);
